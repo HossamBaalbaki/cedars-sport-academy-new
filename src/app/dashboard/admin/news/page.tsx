@@ -14,6 +14,7 @@ interface NewsItem {
   content: string;
   slug?: string;
   imageUrl?: string;
+  image?: string;
   category?: string;
   publishedAt?: string;
   createdAt: string;
@@ -71,7 +72,7 @@ export default function AdminNewsPage() {
     setForm({
       title: item.title,
       content: item.content,
-      image: (item as any).image || "",
+      image: item.image || "",
       category: item.category || "",
       publishedAt: item.publishedAt ? item.publishedAt.slice(0, 10) : "",
     });

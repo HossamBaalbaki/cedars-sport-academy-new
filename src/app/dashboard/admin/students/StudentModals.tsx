@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 
 export interface Enrollment {
   id: string;
@@ -245,7 +244,6 @@ interface ViewModalProps {
 }
 
 export function ViewModal({ student, onClose, onEdit, onAttendance }: ViewModalProps) {
-  const minSess = getMin(student.enrollments);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />

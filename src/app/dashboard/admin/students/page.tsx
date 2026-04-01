@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { studentsApi } from "@/lib/api";
 import {
-  Student, Parent, AttendanceRecord, Enrollment,
+  Student, Parent, AttendanceRecord,
   SBadge, getMin, calcAge,
   AttendanceModal, ViewModal, EditModal, DeleteModal, CancelModal,
 } from "./StudentModals";

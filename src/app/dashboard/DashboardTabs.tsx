@@ -319,7 +319,7 @@ interface SubscriptionPricing {
 
 // ─── Payments Tab ─────────────────────────────────────────────────────────────
 
-export function PaymentTab({ childId, childName, enrollments, onPaymentSuccess }: PaymentTabProps) {
+export function PaymentTab({ childId, onPaymentSuccess }: PaymentTabProps) {
   const [subscriptions, setSubscriptions] = useState<SubscriptionChild[]>([]);
   const [pricing, setPricing] = useState<SubscriptionPricing | null>(null);
   const [history, setHistory] = useState<PaymentRecord[]>([]);

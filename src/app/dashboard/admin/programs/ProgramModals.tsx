@@ -110,7 +110,7 @@ export function ProgramFormFields({ form, setForm, ageGroups, coaches }: Program
               src={form.image.trim()}
               alt="Program preview"
               className="w-full h-full object-cover"
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; (e.currentTarget.nextElementSibling as HTMLElement | null)?.style && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = "flex"); }}
+              onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; const next = e.currentTarget.nextElementSibling as HTMLElement | null; if (next) next.style.display = "flex"; }}
             />
             <div className="absolute inset-0 hidden items-center justify-center text-white/30 text-sm flex-col gap-1">
               <span className="text-2xl">🖼️</span>

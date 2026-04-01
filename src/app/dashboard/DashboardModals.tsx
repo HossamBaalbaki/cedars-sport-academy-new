@@ -209,7 +209,7 @@ function ProgramLocationSelector({
           ))}
         </select>
         {filtered.length === 0 && programs.length > 0 && (
-          <p className="text-white/30 text-xs mt-1">No programs match this child's age group.</p>
+          <p className="text-white/30 text-xs mt-1">No programs match this child&apos;s age group.</p>
         )}
       </div>
 
