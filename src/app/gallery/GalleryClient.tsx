@@ -15,41 +15,11 @@ const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
   GENERAL: { label: "General", emoji: "📸" },
 };
 
-function toYoutubeEmbed(url: string): string | null {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtube.com")) {
-      const id = u.searchParams.get("v");
-      return id ? `https://www.youtube.com/embed/${id}` : null;
-    }
-    if (u.hostname.includes("youtu.be")) {
-      const id = u.pathname.replace("/", "");
-      return id ? `https://www.youtube.com/embed/${id}` : null;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function isVideo(item: PublicGalleryItem) {
-  return !!item.videoUrl;
-}
+// Video functionality removed as videoUrl doesn't exist in PublicGalleryItem type
 
 function getThumbnail(item: PublicGalleryItem): string | null {
   if (item.imageUrl) return item.imageUrl;
-  if (item.videoUrl) {
-    try {
-      const u = new URL(item.videoUrl);
-      let videoId: string | null = null;
-      if (u.hostname.includes("youtube.com")) {
-        videoId = u.searchParams.get("v");
-      } else if (u.hostname.includes("youtu.be")) {
-        videoId = u.pathname.replace("/", "");
-      }
-      if (videoId) return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-    } catch {}
-  }
+  // Video thumbnail logic removed as videoUrl doesn't exist in PublicGalleryItem
   return null;
 }
 
@@ -191,11 +161,7 @@ export default function GalleryClient({ items }: GalleryClientProps) {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition-colors" />
-                    {isVideo(item) && (
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/70 text-white text-xs border border-white/20">
-                        ▶ Video
-                      </div>
-                    )}
+                    {/* Video indicator removed as videoUrl doesn't exist in PublicGalleryItem type */}
                   </button>
                 );
               })}
@@ -212,19 +178,7 @@ export default function GalleryClient({ items }: GalleryClientProps) {
 
           <div className="w-full max-w-5xl">
             <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
-              {active.videoUrl ? (
-                toYoutubeEmbed(active.videoUrl) ? (
-                  <iframe
-                    src={toYoutubeEmbed(active.videoUrl)!}
-                    className="w-full h-full"
-                    allow="autoplay; encrypted-media; picture-in-picture"
-                    allowFullScreen
-                    title={active.title}
-                  />
-                ) : (
-                  <video src={active.videoUrl} controls className="w-full h-full object-contain" />
-                )
-              ) : active.imageUrl ? (
+              {active.imageUrl ? (
                 <Image src={active.imageUrl} alt={active.title} fill className="object-contain" />
               ) : (
                 <div className="w-full h-full bg-dark-900 flex items-center justify-center text-white/40 text-lg">
