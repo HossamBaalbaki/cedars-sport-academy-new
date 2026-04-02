@@ -16,11 +16,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ContactPage() {
-  const locations = await getLocations();
+const locations = await getLocations();
 
-  return (
-    <div className="pt-28 min-h-screen bg-dark-900">
-      {/* ── Header ── */}
+
       <section className="py-16 text-center">
         <div className="container-custom">
           <span className="text-lebanon-green text-sm font-semibold uppercase tracking-widest">
@@ -52,7 +50,7 @@ export default async function ContactPage() {
                   {[
                     { icon: "📞", label: "Phone", value: "+974 507 767 76", href: "tel:+974 399 539 96" },
                     { icon: "✉️", label: "Email", value: "info@cedars.com", href: "mailto:info@cedars.com" },
-                    { icon: "💬", label: "WhatsApp", value: "+974 399 539 96", href: "https://wa.me/974" },39953996
+{ icon: "💬
                     { icon: "📍", label: "Main Campus", value: "Al Rayyan , Doha", href: "#" },
                   ].map((item) => (
                     <a
