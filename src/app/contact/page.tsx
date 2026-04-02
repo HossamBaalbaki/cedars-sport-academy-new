@@ -16,9 +16,11 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ContactPage() {
-const locations = await getLocations();
+  const locations = await getLocations();
 
-
+  return (
+    <div className="pt-28 min-h-screen bg-dark-900">
+      {/* ── Header ── */}
       <section className="py-16 text-center">
         <div className="container-custom">
           <span className="text-lebanon-green text-sm font-semibold uppercase tracking-widest">
@@ -37,7 +39,6 @@ const locations = await getLocations();
       <section className="section-padding pt-0">
         <div className="container-custom">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-
             {/* ── Contact Form (client component) ── */}
             <ContactForm />
 
@@ -48,10 +49,10 @@ const locations = await getLocations();
                 <h2 className="text-2xl font-black text-white mb-6">Quick Contact</h2>
                 <div className="space-y-4">
                   {[
-                    { icon: "📞", label: "Phone", value: "+974 507 767 76", href: "tel:+974 399 539 96" },
+                    { icon: "📞", label: "Phone", value: "+974 507 767 76", href: "tel:+97450776776" },
                     { icon: "✉️", label: "Email", value: "info@cedars.com", href: "mailto:info@cedars.com" },
-{ icon: "💬
-                    { icon: "📍", label: "Main Campus", value: "Al Rayyan , Doha", href: "#" },
+                    { icon: "💬", label: "WhatsApp", value: "+974 399 539 96", href: "https://wa.me/97439953996" },
+                    { icon: "📍", label: "Main Campus", value: "Al Rayyan, Doha", href: "#" },
                   ].map((item) => (
                     <a
                       key={item.label}
@@ -105,7 +106,6 @@ const locations = await getLocations();
                   {[
                     { label: "Instagram", icon: "📸", href: "https://www.instagram.com/csa_qr/" },
                     { label: "Facebook", icon: "👥", href: "https://www.facebook.com/cedarssportacademy/" },
-                    
                     { label: "TikTok", icon: "🎵", href: "https://tiktok.com/@cedarsacademy" },
                   ].map((social) => (
                     <a
