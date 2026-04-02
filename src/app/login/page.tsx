@@ -85,7 +85,7 @@ export default function LoginPage() {
               <label className="block text-white/60 text-sm mb-1.5">Email Address</label>
               <input
                 type="email"
-                placeholder="ahmad@example.com"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

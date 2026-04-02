@@ -38,7 +38,7 @@ export default function Hero() {
         <div className="inline-flex items-center gap-2 bg-lebanon-green/10 border border-lebanon-green/30 rounded-full px-4 py-1.5 mb-6 animate-fade-in">
           <span className="w-2 h-2 rounded-full bg-lebanon-green animate-pulse" />
           <span className="text-lebanon-green text-sm font-medium">
-            {t("Lebanon's #1 Sports Academy", "أكاديمية لبنان الرياضية الأولى")}
+            {t("Qatar's #1 Sports Academy", "أكاديمية قطر الرياضية الأولى")}
           </span>
         </div>
 
@@ -56,8 +56,8 @@ export default function Hero() {
         {/* Subheadline */}
         <p className="text-white/70 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed animate-slide-up">
           {t(
-            "Professional coaching in 6 sports disciplines. 3 locations across Lebanon. 1,200+ athletes trained. Join the academy that builds champions.",
-            "تدريب احترافي في 6 تخصصات رياضية. 3 مواقع في لبنان. أكثر من 1200 رياضي مدرب. انضم إلى الأكاديمية التي تصنع الأبطال."
+            "Professional coaching in 4 sports disciplines. 3 locations across Qatar. 1,200+ athletes trained. Join the academy that builds champions.",
+            "تدريب احترافي في 4 تخصصات رياضية. 3 مواقع في قطر. أكثر من 1200 رياضي مدرب. انضم إلى الأكاديمية التي تصنع الأبطال."
           )}
         </p>
 
@@ -85,8 +85,7 @@ export default function Hero() {
             { icon: "⚽", label: "Football",     labelAr: "كرة القدم" },
             { icon: "🏀", label: "Basketball",   labelAr: "كرة السلة" },
             { icon: "🏊", label: "Swimming",     labelAr: "السباحة" },
-            { icon: "🥋", label: "Martial Arts", labelAr: "فنون القتال" },
-            { icon: "🎾", label: "Tennis",       labelAr: "التنس" },
+          
             { icon: "🤸", label: "Gymnastics",   labelAr: "الجمباز" },
           ].map((sport) => (
             <Link

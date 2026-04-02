@@ -9,21 +9,19 @@ import NewsTicker from "@/components/layout/NewsTicker";
 
 export const metadata: Metadata = {
   title: {
-    default: "Cedars Sport Academy — Shaping Champions Since 2012",
+    default: "Cedars Sport Academy — Shaping Champions Since 2018",
     template: "%s | Cedars Sport Academy",
   },
   description:
-    "Lebanon's premier sports academy offering professional training in Football, Basketball, Swimming, Martial Arts, Tennis, and Gymnastics. Join us and become a champion.",
+    "Qatar's premier sports academy offering professional training in Football, Basketball, Swimming, Martial Arts, Tennis, and Gymnastics. Join us and become a champion.",
   keywords: [
-    "sports academy Lebanon",
-    "football training Lebanon",
-    "basketball academy Beirut",
-    "swimming lessons Lebanon",
-    "martial arts Lebanon",
-    "tennis academy",
-    "gymnastics Lebanon",
+    "sports academy Qatar",
+    "football training Qatar",
+    "basketball academy Doha",
+    "swimming lessons Qatar",
+    "gymnastics Qatar",
     "Cedars Sport Academy",
-    "أكاديمية رياضية لبنان",
+    "أكاديمية رياضية قطر",
   ],
   authors: [{ name: "Cedars Sport Academy" }],
   openGraph: {
@@ -31,9 +29,9 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://cedarsacademy.lb",
     siteName: "Cedars Sport Academy",
-    title: "Cedars Sport Academy — Shaping Champions Since 2012",
+    title: "Cedars Sport Academy — Shaping Champions Since 2018",
     description:
-      "Lebanon's premier sports academy. Professional coaching in 6 sports disciplines across 3 locations.",
+      "Qatar's premier sports academy. Professional coaching in 6 sports disciplines across 3 locations.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&q=80",
@@ -46,7 +44,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Cedars Sport Academy",
-    description: "Lebanon's premier sports academy — Shaping Champions Since 2012",
+    description: "Qatar's premier sports academy — Shaping Champions Since 2018",
   },
   robots: {
     index: true,

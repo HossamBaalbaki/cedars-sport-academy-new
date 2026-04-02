@@ -104,7 +104,7 @@ export default function RegisterPage() {
                 <label className="block text-white/60 text-sm mb-1.5">First Name *</label>
                 <input
                   type="text"
-                  placeholder="Ahmad"
+                  placeholder="name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
@@ -116,7 +116,7 @@ export default function RegisterPage() {
                 <label className="block text-white/60 text-sm mb-1.5">Last Name *</label>
                 <input
                   type="text"
-                  placeholder="Khalil"
+                  placeholder="Surname"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
@@ -131,7 +131,7 @@ export default function RegisterPage() {
               <label className="block text-white/60 text-sm mb-1.5">Email Address *</label>
               <input
                 type="email"
-                placeholder="ahmad@example.com"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -145,7 +145,7 @@ export default function RegisterPage() {
               <label className="block text-white/60 text-sm mb-1.5">Phone Number</label>
               <input
                 type="tel"
-                placeholder="+961 70 123 456"
+                placeholder="+974 00 00 00 00"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 disabled={isLoading}
@@ -167,8 +167,6 @@ export default function RegisterPage() {
                   <option>Football</option>
                   <option>Basketball</option>
                   <option>Swimming</option>
-                  <option>Martial Arts</option>
-                  <option>Tennis</option>
                   <option>Gymnastics</option>
                 </select>
               </div>
@@ -181,9 +179,9 @@ export default function RegisterPage() {
                   className="w-full bg-dark-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-lebanon-green/50 transition-colors disabled:opacity-50"
                 >
                   <option value="">Select location</option>
-                  <option>Jounieh (Main Campus)</option>
-                  <option>Beirut</option>
-                  <option>Zahle</option>
+                  <option>Al Rayyan  (Main Campus)</option>
+                  <option>Um Slal</option>
+                  <option>Al Markheya</option>
                 </select>
               </div>
             </div>

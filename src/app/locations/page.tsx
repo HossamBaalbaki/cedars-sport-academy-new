@@ -30,7 +30,7 @@ export default async function LocationsPage() {
             Our <span className="gradient-text">Locations</span>
           </h1>
           <p className="text-white/60 text-lg max-w-2xl mx-auto">
-            3 state-of-the-art facilities across Lebanon. Find the one closest to you and
+            3 state-of-the-art facilities across Qatar. Find the one closest to you and
             start your athletic journey today.
           </p>
         </div>

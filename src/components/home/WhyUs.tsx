@@ -39,8 +39,8 @@ const reasons = [
     icon: "🏆",
     title: "Championship Proven",
     titleAr: "مثبت بالبطولات",
-    desc: "47+ championships won. Our athletes compete and win at national and international levels.",
-    descAr: "أكثر من 47 بطولة فازت بها. رياضيونا يتنافسون ويفوزون على المستويين الوطني والدولي.",
+    desc: "11+ championships won. Our athletes compete and win at national and international levels.",
+    descAr: "أكثر من 11 بطولة فازت بها. رياضيونا يتنافسون ويفوزون على المستويين الوطني والدولي.",
   },
   {
     icon: "🌍",
@@ -53,8 +53,8 @@ const reasons = [
     icon: "📍",
     title: "3 Locations",
     titleAr: "3 مواقع",
-    desc: "Conveniently located in Jounieh, Beirut, and Zahle — serving all of Lebanon.",
-    descAr: "مواقع مريحة في جونية وبيروت وزحلة — تخدم لبنان بأكمله.",
+    desc: "Conveniently located in Al Rayyan, Um Slal, and AL Markheya — serving all of Qatar.",
+    descAr: "مواقع مريحة في الريان وام صلال والمرخية — تخدم قطر بأكمله.",
   },
   {
     icon: "❤️",

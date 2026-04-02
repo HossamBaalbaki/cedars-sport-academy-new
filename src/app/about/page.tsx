@@ -9,18 +9,18 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Learn about Cedars Sport Academy — Lebanon's premier sports academy founded in 2012. Our mission, vision, values, and story.",
+    "Learn about Cedars Sport Academy — Qatar's premier sports academy founded in 2018. Our mission, vision, values, and story.",
 };
 
 const milestones = [
-  { year: "2012", event: "Academy founded in Jounieh with 50 athletes", eventAr: "تأسست الأكاديمية في جونية مع 50 رياضياً" },
-  { year: "2014", event: "Opened second location in Beirut", eventAr: "افتتاح الموقع الثاني في بيروت" },
-  { year: "2016", event: "First national championship title in Football", eventAr: "أول لقب بطولة وطنية في كرة القدم" },
-  { year: "2018", event: "Launched Swimming & Gymnastics programs", eventAr: "إطلاق برامج السباحة والجمباز" },
-  { year: "2019", event: "Reached 500+ enrolled athletes", eventAr: "وصلنا إلى أكثر من 500 رياضي مسجل" },
-  { year: "2021", event: "Opened third location in Zahle", eventAr: "افتتاح الموقع الثالث في زحلة" },
-  { year: "2022", event: "10-year anniversary — 1,000+ athletes milestone", eventAr: "الذكرى العاشرة — إنجاز 1000+ رياضي" },
-  { year: "2024", event: "Launched SaaS platform for multi-academy management", eventAr: "إطلاق منصة SaaS لإدارة الأكاديميات المتعددة" },
+  { year: "2018", event: "Academy founded in Qatar with 50 athletes", eventAr: "تأسست الأكاديمية في قطر مع 50 رياضياً" },
+  { year: "2019", event: "Opened second location in Um Slal", eventAr: "افتتاح الموقع الثاني في ام صلال ت" },
+  { year: "2020", event: "First national championship title in Football", eventAr: "أول لقب بطولة وطنية في كرة القدم" },
+  { year: "2022", event: "Launched Swimming & Gymnastics programs", eventAr: "إطلاق برامج السباحة والجمباز" },
+  { year: "2023", event: "Reached 500+ enrolled athletes", eventAr: "وصلنا إلى أكثر من 500 رياضي مسجل" },
+  { year: "2024", event: "Opened third location in Al Markhyea", eventAr: "افتتاح الموقع الثالث في المرخية" },
+  { year: "2025", event: "7-year anniversary — 1,000+ athletes milestone", eventAr: "الذكرى السابعة — إنجاز 1000+ رياضي" },
+  { year: "2026", event: "Launched SaaS platform for multi-academy management", eventAr: "إطلاق منصة SaaS لإدارة الأكاديميات المتعددة" },
 ];
 
 export default function AboutPage() {
@@ -92,21 +92,20 @@ export default function AboutPage() {
               </span>
               <h2 className="text-3xl md:text-4xl font-black text-white mt-2 mb-6">
                 From a Dream to{" "}
-                <span className="gradient-text">Lebanon&apos;s #1 Academy</span>
+                <span className="gradient-text">Doha&apos;s #1 Academy</span>
               </h2>
               <div className="space-y-4 text-white/60 leading-relaxed">
                 <p>
-                  Cedars Sport Academy was born from a passion for sport and a deep love for Lebanon.
-                  Our founder, Coach Karim Nassar, a former national football player, saw a gap in
-                  quality sports education for Lebanese youth.
+                  Cedars Sport Academy: Developing 
+Champions, Inspiring Futures 
                 </p>
                 <p>
-                  Starting with just 50 athletes in a rented facility in Jounieh, we grew through
+                  Starting with just 50 athletes in a rented facility in Al Rayyan , we grew through
                   dedication, results, and word of mouth. Today, we operate 3 state-of-the-art
-                  facilities across Lebanon with over 1,200 active athletes.
+                  facilities across Qatar with over 1,200 active athletes.
                 </p>
                 <p>
-                  Our coaches have trained athletes who went on to represent Lebanon in regional and
+                  Our coaches have trained athletes who went on to represent Qatar in regional and
                   international competitions. We are proud of every single one of them.
                 </p>
               </div>
@@ -128,7 +127,7 @@ export default function AboutPage() {
               <div className="absolute bottom-6 left-6 right-6">
                 <div className="glass-card p-4 text-center">
                   <div className="text-3xl font-black text-lebanon-green">2012</div>
-                  <div className="text-white/60 text-sm">Founded in Jounieh, Lebanon</div>
+                  <div className="text-white/60 text-sm">Founded in Doha, Qatar</div>
                 </div>
               </div>
             </div>

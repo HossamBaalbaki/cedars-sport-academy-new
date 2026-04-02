@@ -10,7 +10,7 @@ import { getPrograms } from "@/lib/public-api";
 export const metadata: Metadata = {
   title: "Programs",
   description:
-    "Explore all sports programs at Cedars Sport Academy — Football, Basketball, Swimming, Martial Arts, Tennis, and Gymnastics for all ages.",
+    "Explore all sports programs at Cedars Sport Academy — Football, Basketball, Swimming, and Gymnastics for all ages.",
 };
 
 export const dynamic = "force-dynamic";

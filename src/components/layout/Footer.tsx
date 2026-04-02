@@ -24,8 +24,6 @@ const programs = [
   { href: "/programs#football",     label: "Football",      labelAr: "كرة القدم" },
   { href: "/programs#basketball",   label: "Basketball",    labelAr: "كرة السلة" },
   { href: "/programs#swimming",     label: "Swimming",      labelAr: "السباحة" },
-  { href: "/programs#martial-arts", label: "Martial Arts",  labelAr: "فنون القتال" },
-  { href: "/programs#tennis",       label: "Tennis",        labelAr: "التنس" },
   { href: "/programs#gymnastics",   label: "Gymnastics",    labelAr: "الجمباز" },
 ];
 
@@ -57,8 +55,8 @@ export default function Footer() {
             </Link>
             <p className="text-white/50 text-sm leading-relaxed mb-6">
               {t(
-                "Lebanon's premier sports academy. Professional coaching, world-class facilities, and a passion for developing champions.",
-                "أكاديمية لبنان الرياضية الرائدة. تدريب احترافي ومرافق عالمية المستوى وشغف بتطوير الأبطال."
+                "Qatar's premier sports academy. Professional coaching, world-class facilities, and a passion for developing champions.",
+                "أكاديمية قطر الرياضية الرائدة. تدريب احترافي ومرافق عالمية المستوى وشغف بتطوير الأبطال."
               )}
             </p>
 
@@ -169,8 +167,8 @@ export default function Footer() {
                 <span className="text-lebanon-green mt-0.5">📍</span>
                 <span className="text-white/50 text-sm">
                   {t(
-                    "Rue de la Mer, Doha, Qatar",
-                    "شارع البحر، جونية، جبل لبنان"
+                    " Doha, Qatar",
+                    "الدوحة، قطر"
                   )}
                 </span>
               </li>
@@ -231,7 +229,7 @@ export default function Footer() {
               {t("Terms of Use", "شروط الاستخدام")}
             </Link>
             <span className="text-white/20 text-xs">
-              {t("Powered by Cedars SaaS", "مدعوم من سيدرز SaaS")}
+              {t("Powered by LebConnect +974 66 36 57 95", "مدعوم من LebConnect SaaS")}
             </span>
           </div>
         </div>

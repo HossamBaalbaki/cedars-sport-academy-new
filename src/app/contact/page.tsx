@@ -50,10 +50,10 @@ export default async function ContactPage() {
                 <h2 className="text-2xl font-black text-white mb-6">Quick Contact</h2>
                 <div className="space-y-4">
                   {[
-                    { icon: "📞", label: "Phone", value: "+961 9 123 456", href: "tel:+9619123456" },
-                    { icon: "✉️", label: "Email", value: "info@cedarsacademy.lb", href: "mailto:info@cedarsacademy.lb" },
-                    { icon: "💬", label: "WhatsApp", value: "+961 70 123 456", href: "https://wa.me/96170123456" },
-                    { icon: "📍", label: "Main Campus", value: "Jounieh, Mount Lebanon", href: "#" },
+                    { icon: "📞", label: "Phone", value: "+974 507 767 76", href: "tel:+974 399 539 96" },
+                    { icon: "✉️", label: "Email", value: "info@cedars.com", href: "mailto:info@cedars.com" },
+                    { icon: "💬", label: "WhatsApp", value: "+974 399 539 96", href: "https://wa.me/974" },39953996
+                    { icon: "📍", label: "Main Campus", value: "Al Rayyan , Doha", href: "#" },
                   ].map((item) => (
                     <a
                       key={item.label}
@@ -105,9 +105,9 @@ export default async function ContactPage() {
                 <h2 className="text-xl font-black text-white mb-4">Follow Us</h2>
                 <div className="flex gap-3">
                   {[
-                    { label: "Instagram", icon: "📸", href: "https://instagram.com/cedarsacademy" },
-                    { label: "Facebook", icon: "👥", href: "https://facebook.com/cedarsacademy" },
-                    { label: "YouTube", icon: "▶️", href: "https://youtube.com/@cedarsacademy" },
+                    { label: "Instagram", icon: "📸", href: "https://www.instagram.com/csa_qr/" },
+                    { label: "Facebook", icon: "👥", href: "https://www.facebook.com/cedarssportacademy/" },
+                    
                     { label: "TikTok", icon: "🎵", href: "https://tiktok.com/@cedarsacademy" },
                   ].map((social) => (
                     <a

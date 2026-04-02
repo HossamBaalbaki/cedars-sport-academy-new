@@ -9,10 +9,10 @@ import { getAchievements } from "@/lib/public-api";
 export const metadata: Metadata = {
   title: "Achievements",
   description:
-    "Cedars Sport Academy's championship titles, awards, and milestones since 2012.",
+    "Cedars Sport Academy's championship titles, awards, and milestones since 2018.",
 };
 
-const categories = ["All", "Football", "Basketball", "Swimming", "Martial Arts", "Tennis", "Gymnastics", "Academy"];
+const categories = ["All", "Football", "Basketball", "Swimming",  "Gymnastics", "Academy"];
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +33,7 @@ export default async function AchievementsPage() {
           </h1>
           <p className="text-white/60 text-lg max-w-2xl mx-auto">
             Over a decade of excellence. 47+ championships, countless medals, and a legacy
-            of champions representing Lebanon.
+            of champions representing Qatar.
           </p>
         </div>
       </section>
@@ -43,10 +43,10 @@ export default async function AchievementsPage() {
         <div className="container-custom">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { value: "47+", label: "Championships", icon: "🏆" },
+              { value: "11+", label: "Championships", icon: "🏆" },
               { value: "120+", label: "Medals Won", icon: "🥇" },
-              { value: "12", label: "Years of Excellence", icon: "⭐" },
-              { value: "6", label: "Sports Disciplines", icon: "🎯" },
+              { value: "8", label: "Years of Excellence", icon: "⭐" },
+              { value: "4", label: "Sports Disciplines", icon: "🎯" },
             ].map((stat) => (
               <div key={stat.label} className="glass-card p-5 text-center">
                 <div className="text-3xl mb-2">{stat.icon}</div>
@@ -122,7 +122,7 @@ export default async function AchievementsPage() {
             Write Your Own <span className="text-yellow-400">Champion Story</span>
           </h2>
           <p className="text-white/60 mb-8 max-w-lg mx-auto">
-            Join the academy that has produced Lebanon&apos;s finest athletes.
+            Join the academy that has produced Qatar&apos;s finest athletes.
           </p>
           <Link
             href="/register"
