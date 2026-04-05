@@ -58,6 +58,7 @@ export default function Testimonials() {
                     src={testimonial.image}
                     alt={testimonial.name}
                     fill
+                    sizes="40px"
                     className="object-cover"
                   />
                 </div>
