@@ -59,7 +59,7 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const [tenant, setTenant] = useState<TenantConfig>(defaultTenantConfig);
+  const [tenant] = useState<TenantConfig>(defaultTenantConfig);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {

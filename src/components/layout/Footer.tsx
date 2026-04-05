@@ -41,9 +41,11 @@ export default function Footer() {
           {/* ── Brand Column ── */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-lebanon-green to-cedar-700 flex items-center justify-center text-2xl shadow-lg">
-                🌲
-              </div>
+              <img
+                src={tenant.logo}
+                alt={tenant.name}
+                className="w-20 h-20 rounded-xl object-contain bg-white/5 p-1 shadow-lg"
+              />
               <div>
                 <div className="text-white font-bold text-lg leading-tight">
                   {t(tenant.name, tenant.nameAr)}
