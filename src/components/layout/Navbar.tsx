@@ -75,25 +75,18 @@ export default function Navbar() {
           : "bg-transparent"
       }`}
       // Offset for the news ticker above
-      style={{ top: "36px" }}
+      style={{ top: "44px" }}
     >
       <nav className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
 
           {/* ── Logo ── */}
           <Link href="/" className="flex items-center gap-3 group">
-            {/* Cedar tree icon as SVG logo placeholder */}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-lebanon-green to-cedar-700 flex items-center justify-center text-xl font-black shadow-lg group-hover:scale-105 transition-transform">
-              🌲
-            </div>
-            <div className="hidden sm:block">
-              <div className="text-white font-bold text-lg leading-tight">
-                {t(tenant.name, tenant.nameAr)}
-              </div>
-              <div className="text-lebanon-green text-xs font-medium">
-                {t(tenant.tagline, tenant.taglineAr)}
-              </div>
-            </div>
+            <img
+              src={tenant.logo}
+              alt={tenant.name}
+              className="h-40 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform"
+            />
           </Link>
 
           {/* ── Desktop Navigation ── */}
