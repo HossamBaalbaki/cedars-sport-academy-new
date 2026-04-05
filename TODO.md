@@ -1,31 +1,14 @@
-# Database Reset & Live Data Migration — TODO
+# Footer Customization Plan Progress
 
-## Steps
+**Status:** Approved by user. Proceeding with edits.
 
-- [x] 1. Full database reset (prisma migrate reset --force)
-- [x] 2. Create seed script with admin user (info@cedars.com / Admin@1234) + tenant
-- [x] 3. Run seed to populate admin + tenant
-- [x] 4. Fix AchievementsStrip.tsx — replace mock data with live API fetch
-- [x] 5. Stats.tsx — kept as static (marketing counters, no DB equivalent needed)
-- [x] 6. Keep Testimonials.tsx as static content (no change)
-- [x] 7. Keep About page milestones as static content (no change)
-- [x] 8. Verify all public pages show live data (empty states when no data)
+**Plan Steps:**
+- [x] Understand files (TenantContext.tsx, Footer.tsx)
+- [x] Confirm front-end only
+- [x] User approval ("proceed")
+- [ ] Create public/images/logo.png (user manual)
+- [ ] Update TenantContext.tsx with real logo/social URLs (awaiting URLs)
+- [ ] Test at localhost:3000
+- [ ] Complete
 
-## Bug Fixes Applied
-
-- [x] Backend: `gallery.service.ts` — removed `"videoUrl"` from all raw SQL queries
-       (column does not exist in DB after migration reset → was causing 500 on /gallery)
-- [x] Backend: `tsconfig.json` — added `rootDir: "./src"` + excluded `prisma/` dir
-       (fixes stale dist/ path mismatch: `Cannot find module './prisma/prisma.module'`)
-- [x] Frontend: `public-api.ts` — updated `PublicGalleryItem` type (removed `videoUrl`,
-       added `titleAr`, `descriptionAr`, `sortOrder` to match actual API response)
-
-## Current State
-
-- Backend running on http://localhost:3001/v1 ✅
-- Frontend running on http://localhost:3000 ✅
-- Admin user: info@cedars.com / Admin@1234 ✅
-- Tenant ID: 921a4273-78be-4b91-a99b-b013e9830456 ✅
-- All public API endpoints return 200 with empty arrays (no data seeded yet) ✅
-- Gallery: no more 500 error ✅
-- AchievementsStrip: live API, returns null when empty ✅
+**Next:** User to provide Instagram/Facebook URLs and confirm logo uploaded.
