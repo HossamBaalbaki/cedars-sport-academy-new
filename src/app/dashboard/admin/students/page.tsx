@@ -61,6 +61,11 @@ export default function AdminStudentsPage() {
   const [cancelTarget, setCancelTarget] = useState<{ enrollmentId: string; studentName: string; programName: string } | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
+  // Edit sessions
+  const [sessionsTarget, setSessionsTarget] = useState<{ enrollmentId: string; studentName: string; programName: string; current: number } | null>(null);
+  const [sessionsValue, setSessionsValue] = useState<string>("");
+  const [savingSessions, setSavingSessions] = useState(false);
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push("/login");
     if (!isLoading && user && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") router.push("/dashboard");
@@ -168,6 +173,43 @@ export default function AdminStudentsPage() {
       else { const e = await r.json().catch(() => ({})); setError(e.message || "Failed to cancel"); setCancelTarget(null); }
     } catch { setError("Network error"); setCancelTarget(null); }
     finally { setCancelling(false); }
+  };
+
+  const openSessionsEditor = (enrollmentId: string, studentName: string, programName: string, current?: number) => {
+    const safeCurrent = Number.isFinite(Number(current)) ? Number(current) : 0;
+    setSessionsTarget({ enrollmentId, studentName, programName, current: safeCurrent });
+    setSessionsValue(String(safeCurrent));
+  };
+
+  const handleSaveSessions = async () => {
+    if (!sessionsTarget) return;
+    const parsed = Number(sessionsValue);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      setError("Sessions must be a non-negative number");
+      return;
+    }
+
+    setSavingSessions(true);
+    try {
+      const r = await fetch(`${API}/programs/enrollments/${sessionsTarget.enrollmentId}/sessions`, {
+        method: "PATCH",
+        headers: hdrs(),
+        body: JSON.stringify({ sessionsRemaining: Math.floor(parsed) }),
+      });
+
+      if (r.ok) {
+        setSessionsTarget(null);
+        setSessionsValue("");
+        fetchStudents();
+      } else {
+        const e = await r.json().catch(() => ({}));
+        setError(e.message || "Failed to update sessions");
+      }
+    } catch {
+      setError("Network error");
+    } finally {
+      setSavingSessions(false);
+    }
   };
 
   const filtered = students.filter((s) =>
@@ -315,6 +357,14 @@ export default function AdminStudentsPage() {
                             {s.enrollments?.length ? s.enrollments.slice(0, 3).map((e) => (
                               <span key={e.id} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-lebanon-green/10 text-lebanon-green text-xs border border-lebanon-green/20">
                                 {e.program?.name || "Program"}
+                                <span className="text-white/50">·</span>
+                                <button
+                                  onClick={() => openSessionsEditor(e.id, `${s.firstName} ${s.lastName}`, e.program?.name || "Program", e.sessionsRemaining)}
+                                  className="px-1 rounded bg-white/10 hover:bg-white/20 text-white/80 hover:text-white"
+                                  title="Edit sessions"
+                                >
+                                  {Number.isFinite(Number(e.sessionsRemaining)) ? e.sessionsRemaining : 0}
+                                </button>
                                 <button
                                   onClick={() => setCancelTarget({ enrollmentId: e.id, studentName: `${s.firstName} ${s.lastName}`, programName: e.program?.name || "Program" })}
                                   className="w-3.5 h-3.5 rounded-full bg-lebanon-green/20 hover:bg-red-500/40 hover:text-red-300 flex items-center justify-center transition-all leading-none"
@@ -405,6 +455,40 @@ export default function AdminStudentsPage() {
           onConfirm={handleCancelEnrollment}
           onClose={() => setCancelTarget(null)}
         />
+      )}
+
+      {sessionsTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSessionsTarget(null)} />
+          <div className="relative w-full max-w-sm bg-dark-800 border border-white/10 rounded-2xl shadow-2xl p-6">
+            <h3 className="text-lg font-bold text-white mb-2">Edit Sessions</h3>
+            <p className="text-white/50 text-sm mb-4">
+              {sessionsTarget.studentName} — {sessionsTarget.programName}
+            </p>
+            <input
+              type="number"
+              min={0}
+              value={sessionsValue}
+              onChange={(e) => setSessionsValue(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSessionsTarget(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSessions}
+                disabled={savingSessions}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-lebanon-green hover:bg-lebanon-green/90 text-white text-sm font-semibold disabled:opacity-50"
+              >
+                {savingSessions ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { getPrograms } from "@/lib/public-api";
+import ProgramScheduleModal from "@/components/programs/ProgramScheduleModal";
 
 export const metadata: Metadata = {
   title: "Programs",
@@ -91,10 +92,12 @@ export default async function ProgramsPage() {
                     { label: "Duration", value: "60-90 min", icon: "⏱" },
                     {
                       label: "Schedule",
-                      value:
-                        program.schedules && program.schedules.length > 0
-                          ? `${dayMap[program.schedules[0].dayOfWeek]} ${program.schedules[0].startTime}`
-                          : "TBA",
+                      value: (
+                        <ProgramScheduleModal
+                          programName={program.name}
+                          schedules={program.schedules || []}
+                        />
+                      ),
                       icon: "📅",
                     },
                     { label: "Coach", value: "Assigned by Academy", icon: "🏅" },
