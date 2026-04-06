@@ -16,8 +16,6 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const dayMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 export default async function ProgramsPage() {
   const programs = await getPrograms();
 

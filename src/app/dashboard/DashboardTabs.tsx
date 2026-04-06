@@ -325,7 +325,7 @@ export function PaymentTab({ childId, onPaymentSuccess }: PaymentTabProps) {
   const [history, setHistory] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null); // studentId being paid, or "all"
-  const [selectedMethod, setSelectedMethod] = useState<"CASH" | "CARD">("CASH");
+  const selectedMethod: "CASH" | "CARD" = "CASH";
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
