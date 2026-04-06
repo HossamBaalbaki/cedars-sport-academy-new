@@ -325,7 +325,7 @@ export function PaymentTab({ childId, onPaymentSuccess }: PaymentTabProps) {
   const [history, setHistory] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null); // studentId being paid, or "all"
-  const [selectedMethod, setSelectedMethod] = useState<"CASH" | "CARD">("CARD");
+  const [selectedMethod, setSelectedMethod] = useState<"CASH" | "CARD">("CASH");
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
@@ -442,40 +442,23 @@ export function PaymentTab({ childId, onPaymentSuccess }: PaymentTabProps) {
         </div>
       )}
 
-      {/* ── Payment Method Selector ── */}
+      {/* ── Payment Method Selector (Cash Only) ── */}
       <div className="glass-card p-5">
         <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">💳 Payment Method</h3>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setSelectedMethod("CARD")}
-            className={`flex-1 p-3 rounded-xl border-2 transition-all text-center ${
-              selectedMethod === "CARD"
-                ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                : "border-white/10 bg-white/3 text-white/50 hover:border-white/20"
-            }`}
-          >
-            <div className="text-2xl mb-1">💳</div>
-            <div className="text-sm font-semibold">Card</div>
-            <div className="text-xs opacity-60">Pay instantly</div>
-          </button>
-          <button
-            onClick={() => setSelectedMethod("CASH")}
-            className={`flex-1 p-3 rounded-xl border-2 transition-all text-center ${
-              selectedMethod === "CASH"
-                ? "border-green-500 bg-green-500/10 text-green-400"
-                : "border-white/10 bg-white/3 text-white/50 hover:border-white/20"
-            }`}
-          >
-            <div className="text-2xl mb-1">💵</div>
-            <div className="text-sm font-semibold">Cash</div>
-            <div className="text-xs opacity-60">Pay at location</div>
-          </button>
+
+        <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-300 text-sm mb-3">
+          💳 Card payment: <span className="font-semibold">Coming soon</span>
         </div>
-        {selectedMethod === "CASH" && (
-          <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
-            💡 You can attend the first class and pay at the location. Admin will be notified.
-          </div>
-        )}
+
+        <div className="p-3 rounded-xl border-2 border-green-500 bg-green-500/10 text-green-300 text-center">
+          <div className="text-2xl mb-1">💵</div>
+          <div className="text-sm font-semibold">Cash (Available Now)</div>
+          <div className="text-xs opacity-80">Pay at location</div>
+        </div>
+
+        <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
+          💡 Cash only for now. Card payments will be enabled later.
+        </div>
       </div>
 
       {/* ── Children Subscriptions ── */}
@@ -488,7 +471,7 @@ export function PaymentTab({ childId, onPaymentSuccess }: PaymentTabProps) {
               disabled={paying !== null}
               className="px-4 py-2 rounded-xl bg-lebanon-green text-white text-sm font-semibold hover:bg-lebanon-green/80 disabled:opacity-60 transition-all"
             >
-              {paying === "all" ? "Processing..." : `Pay All (${selectedMethod})`}
+              {paying === "all" ? "Processing..." : "Pay All (Cash)"}
             </button>
           )}
         </div>
@@ -540,7 +523,7 @@ export function PaymentTab({ childId, onPaymentSuccess }: PaymentTabProps) {
                           ? "Processing..."
                           : child.subscriptionStatus === "resubscribe"
                           ? `🔄 Resubscribe (${selectedMethod})`
-                          : `Pay (${selectedMethod})`}
+                          : "Pay (Cash)"}
                       </button>
                     )}
                   </div>

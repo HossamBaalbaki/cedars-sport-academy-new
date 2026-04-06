@@ -401,6 +401,7 @@ interface AttModalProps {
 }
 
 export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) {
+  const isCompletedSession = session.isCompleted === true;
   const [roster, setRoster] = useState<Student[]>([]);
   const [rosterBusy, setRosterBusy] = useState(true);
   const [attMap, setAttMap] = useState<Record<string, Rec>>({});
@@ -510,8 +511,12 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
                 {STATUS_OPTS.map((opt) => (
                   <button
                     key={opt.val}
-                    onClick={() => markAll(opt.val)}
-                    className={"px-2.5 py-1 rounded-lg text-xs font-medium " + opt.cls}
+                    onClick={() => !isCompletedSession && markAll(opt.val)}
+                    disabled={isCompletedSession}
+                    className={
+                      "px-2.5 py-1 rounded-lg text-xs font-medium " +
+                      (isCompletedSession ? "bg-white/5 text-white/20 cursor-not-allowed" : opt.cls)
+                    }
                   >
                     {opt.label}
                   </button>
@@ -638,7 +643,8 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
                               type="checkbox"
                               checked={!!rec.isInjured}
                               onChange={(e) => setF(stu.id, "isInjured", e.target.checked)}
-                              className="w-4 h-4 rounded accent-red-500"
+                              disabled={isCompletedSession}
+                              className="w-4 h-4 rounded accent-red-500 disabled:opacity-40"
                             />
                             <span className="text-white/50 text-xs">Injured</span>
                           </label>
@@ -647,7 +653,8 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
                               value={rec.injuryNote ?? ""}
                               onChange={(e) => setF(stu.id, "injuryNote", e.target.value)}
                               placeholder="Injury note..."
-                              className="flex-1 bg-dark-700 border border-red-500/20 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
+                              disabled={isCompletedSession}
+                              className="flex-1 bg-dark-700 border border-red-500/20 rounded-lg px-2 py-1 text-white text-xs focus:outline-none disabled:opacity-40"
                             />
                           )}
                         </div>
@@ -662,7 +669,8 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
                             onChange={(e) => setF(stu.id, "notes", e.target.value)}
                             rows={2}
                             placeholder="Note about this student for this session…"
-                            className="w-full bg-dark-700 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-white/30 resize-none"
+                            disabled={isCompletedSession}
+                            className="w-full bg-dark-700 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-white/30 resize-none disabled:opacity-40"
                           />
                         </div>
                       </>
@@ -675,6 +683,11 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
         </div>
 
         <div className="p-6 border-t border-white/5 flex-shrink-0">
+          {isCompletedSession && (
+            <div className="mb-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-300 text-sm text-center">
+              This session is completed. Attendance is read-only.
+            </div>
+          )}
           {subOk && (
             <div className="mb-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm text-center">
               Attendance saved successfully!
@@ -687,7 +700,7 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
             <button onClick={onClose} className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 text-sm rounded-xl transition-colors">
               Close
             </button>
-            {roster.length > 0 && (
+            {roster.length > 0 && !isCompletedSession && (
               <button
                 onClick={doSubmit}
                 disabled={subBusy}
