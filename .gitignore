@@ -1,0 +1,12 @@
+# See https://github.com/github/gitignore/blob/main/Next.js.gitignore
+.next/
+out/
+node_modules/
+.env.local
+.env.development.local
+.env.test.local  
+.env.production.local
+.DS_Store
+*.log
+backups/
+TODO-github-deploy.md
