@@ -14,13 +14,6 @@ import {
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b013e9830456";
 
-interface ExpiringEnrollment {
-  studentId: string;
-  firstName: string;
-  lastName: string;
-  programName: string;
-  sessionsRemaining: number;
-}
 
 const EMPTY_FORM = { firstName: "", lastName: "", dateOfBirth: "", nationality: "", bloodType: "", medicalNotes: "", parentId: "", photo: "", newParentEmail: "", newParentPhone: "" };
 
@@ -49,10 +42,6 @@ export default function AdminStudentsPage() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceSearch, setAttendanceSearch] = useState("");
-
-  // Expiring
-  const [expiring, setExpiring] = useState<ExpiringEnrollment[]>([]);
-  const [expiringDismissed, setExpiringDismissed] = useState(false);
 
   // Delete
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
@@ -90,7 +79,7 @@ export default function AdminStudentsPage() {
   const [togglingStudent, setTogglingStudent] = useState<string | null>(null);
 
   // Status filter
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE" | "NO_ENROLLMENT">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE" | "NO_ENROLLMENT" | "PAID" | "UNPAID" | "EXPIRING">("ALL");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push("/login");
@@ -122,20 +111,12 @@ export default function AdminStudentsPage() {
     } catch { /* silent */ }
   }, [token, hdrs]);
 
-  const fetchExpiring = useCallback(async () => {
-    if (!token) return;
-    try {
-      const r = await studentsApi.getExpiring();
-      setExpiring((r.data as ExpiringEnrollment[]) || []);
-    } catch { /* silent */ }
-  }, [token]);
-
   const fetchPrograms = useCallback(async () => {
     try { const r = await programsApi.getAll(); setPrograms((r.data as ProgramOption[]) || []); }
     catch { /* silent */ }
   }, []);
 
-  useEffect(() => { fetchStudents(); fetchParents(); fetchExpiring(); fetchPrograms(); }, [fetchStudents, fetchParents, fetchExpiring, fetchPrograms]);
+  useEffect(() => { fetchStudents(); fetchParents(); fetchPrograms(); }, [fetchStudents, fetchParents, fetchPrograms]);
 
   const openAttendance = useCallback(async (s: Student) => {
     setAttendanceStudent(s);
@@ -165,7 +146,7 @@ export default function AdminStudentsPage() {
     setEnrollSaving(true); setEnrollError(null);
     try {
       await studentsApi.adminEnroll(enrollTarget.id, data);
-      setEnrollTarget(null); fetchStudents(); fetchExpiring();
+      setEnrollTarget(null); fetchStudents();
     } catch (e) { setEnrollError(e instanceof Error ? e.message : "Failed to enroll"); }
     finally { setEnrollSaving(false); }
   };
@@ -175,7 +156,7 @@ export default function AdminStudentsPage() {
     setRenewSaving(true); setRenewError(null);
     try {
       await studentsApi.adminRenew(renewTarget.student.id, renewTarget.enrollmentId, data);
-      setRenewTarget(null); fetchStudents(); fetchExpiring();
+      setRenewTarget(null); fetchStudents();
     } catch (e) { setRenewError(e instanceof Error ? e.message : "Failed to renew"); }
     finally { setRenewSaving(false); }
   };
@@ -300,6 +281,10 @@ export default function AdminStudentsPage() {
     }
   };
 
+  const hasPaid     = (s: Student) => (s.enrollments ?? []).some(e => (e.sessionsRemaining ?? 0) > 0);
+  const hasExpired  = (s: Student) => (s.enrollments ?? []).some(e => (e.sessionsRemaining ?? 0) === 0);
+  const hasExpiring = (s: Student) => (s.enrollments ?? []).some(e => { const r = e.sessionsRemaining ?? 0; return r > 0 && r <= 3; });
+
   const filtered = students.filter((s) => {
     const matchesSearch =
       `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
@@ -311,6 +296,9 @@ export default function AdminStudentsPage() {
     if (statusFilter === "ACTIVE") return isActive;
     if (statusFilter === "INACTIVE") return !isActive;
     if (statusFilter === "NO_ENROLLMENT") return !hasEnrollment;
+    if (statusFilter === "PAID") return hasPaid(s);
+    if (statusFilter === "UNPAID") return hasExpired(s);
+    if (statusFilter === "EXPIRING") return hasExpiring(s);
     return true;
   });
 
@@ -319,6 +307,9 @@ export default function AdminStudentsPage() {
     ACTIVE: students.filter((s) => s.isActive !== false).length,
     INACTIVE: students.filter((s) => s.isActive === false).length,
     NO_ENROLLMENT: students.filter((s) => (s.enrollments?.length ?? 0) === 0).length,
+    PAID: students.filter(hasPaid).length,
+    UNPAID: students.filter(hasExpired).length,
+    EXPIRING: students.filter(hasExpiring).length,
   };
 
   if (isLoading) {
@@ -350,37 +341,6 @@ export default function AdminStudentsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Expiring subscriptions banner */}
-        {!expiringDismissed && expiring.length > 0 && (
-          <div className="mb-6 p-4 rounded-2xl bg-orange-500/10 border border-orange-500/25">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl flex-shrink-0">⚠️</span>
-                <div>
-                  <h3 className="text-orange-400 font-bold text-sm mb-1">
-                    Expiring Subscriptions — {expiring.length} enrollment{expiring.length !== 1 ? "s" : ""} running low
-                  </h3>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {expiring.map((e, i) => (
-                      <span key={i} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${e.sessionsRemaining <= 0 ? "bg-red-500/15 text-red-400 border-red-500/25" : e.sessionsRemaining === 1 ? "bg-orange-500/15 text-orange-400 border-orange-500/25" : "bg-yellow-500/15 text-yellow-400 border-yellow-500/25"}`}>
-                        <span className="font-semibold">{e.firstName} {e.lastName}</span>
-                        <span className="text-white/40">·</span>
-                        <span>{e.programName}</span>
-                        <span className="text-white/40">·</span>
-                        <span>{e.sessionsRemaining <= 0 ? "🔴 Expired" : `${e.sessionsRemaining} left`}</span>
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-orange-400/60 text-xs mt-2">
-                    Go to <Link href="/dashboard/admin/payments" className="underline hover:text-orange-400">Payments</Link> to renew.
-                  </p>
-                </div>
-              </div>
-              <button onClick={() => setExpiringDismissed(true)} className="text-orange-400/40 hover:text-orange-400 text-lg leading-none flex-shrink-0">✕</button>
-            </div>
-          </div>
-        )}
-
         {/* Search + Filters */}
         <div className="mb-6 space-y-3">
           <input
@@ -391,14 +351,25 @@ export default function AdminStudentsPage() {
             className="w-full px-4 py-3 rounded-xl bg-dark-800 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 text-sm"
           />
           <div className="flex gap-2 flex-wrap">
-            {(["ALL", "ACTIVE", "INACTIVE", "NO_ENROLLMENT"] as const).map((f) => {
-              const labels: Record<string, string> = { ALL: "All", ACTIVE: "✅ Active", INACTIVE: "⛔ Inactive", NO_ENROLLMENT: "📭 No Enrollment" };
+            {(["ALL", "ACTIVE", "INACTIVE", "NO_ENROLLMENT", "PAID", "UNPAID", "EXPIRING"] as const).map((f) => {
+              const labels: Record<string, string> = {
+                ALL: "All",
+                ACTIVE: "✅ Active",
+                INACTIVE: "⛔ Inactive",
+                NO_ENROLLMENT: "📭 No Enrollment",
+                PAID: "💚 Paid",
+                UNPAID: "🔴 Expired",
+                EXPIRING: "⚠️ Expiring Soon",
+              };
               const active = statusFilter === f;
               const colorMap: Record<string, string> = {
-                ALL: active ? "bg-white/15 text-white border-white/20" : "bg-dark-800 text-white/50 border-white/10 hover:text-white",
-                ACTIVE: active ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" : "bg-dark-800 text-white/50 border-white/10 hover:text-emerald-400",
-                INACTIVE: active ? "bg-red-500/20 text-red-400 border-red-500/40" : "bg-dark-800 text-white/50 border-white/10 hover:text-red-400",
-                NO_ENROLLMENT: active ? "bg-orange-500/20 text-orange-400 border-orange-500/40" : "bg-dark-800 text-white/50 border-white/10 hover:text-orange-400",
+                ALL:           active ? "bg-white/15 text-white border-white/20"                   : "bg-dark-800 text-white/50 border-white/10 hover:text-white",
+                ACTIVE:        active ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" : "bg-dark-800 text-white/50 border-white/10 hover:text-emerald-400",
+                INACTIVE:      active ? "bg-red-500/20 text-red-400 border-red-500/40"             : "bg-dark-800 text-white/50 border-white/10 hover:text-red-400",
+                NO_ENROLLMENT: active ? "bg-orange-500/20 text-orange-400 border-orange-500/40"    : "bg-dark-800 text-white/50 border-white/10 hover:text-orange-400",
+                PAID:          active ? "bg-green-500/20 text-green-400 border-green-500/40"       : "bg-dark-800 text-white/50 border-white/10 hover:text-green-400",
+                UNPAID:        active ? "bg-red-500/20 text-red-400 border-red-500/40"             : "bg-dark-800 text-white/50 border-white/10 hover:text-red-400",
+                EXPIRING:      active ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"    : "bg-dark-800 text-white/50 border-white/10 hover:text-yellow-400",
               };
               return (
                 <button
