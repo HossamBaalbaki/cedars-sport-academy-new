@@ -93,9 +93,9 @@ function EditUserModal({ user, saving, error, onSave, onClose }: {
 }
 
 // ── Children tooltip/panel ─────────────────────────────────────────────────────
-function ChildrenBadge({ children }: { children: Child[] }) {
+function ChildrenBadge({ items }: { items: Child[] }) {
   const [open, setOpen] = useState(false);
-  if (!children.length) return <span className="text-white/25 text-sm">—</span>;
+  if (!items.length) return <span className="text-white/25 text-sm">—</span>;
   return (
     <div className="relative inline-block">
       <button
@@ -103,13 +103,13 @@ function ChildrenBadge({ children }: { children: Child[] }) {
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-medium transition-all border border-white/10"
       >
         <span>👶</span>
-        <span>{children.length} {children.length === 1 ? "child" : "children"}</span>
+        <span>{items.length} {items.length === 1 ? "child" : "children"}</span>
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-8 z-20 w-56 bg-dark-800 border border-white/10 rounded-xl shadow-2xl p-2">
-            {children.map(c => (
+            {items.map(c => (
               <div key={c.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5">
                 <div className="w-6 h-6 rounded-full bg-lebanon-green/20 flex items-center justify-center text-xs font-bold text-lebanon-green shrink-0">
                   {c.firstName[0]}{c.lastName[0]}
@@ -279,7 +279,7 @@ export default function AdminUsersPage() {
                       </td>
                       {/* Children */}
                       <td className="px-5 py-4">
-                        <ChildrenBadge children={u.children} />
+                        <ChildrenBadge items={u.children} />
                       </td>
                       {/* Status */}
                       <td className="px-5 py-4">
