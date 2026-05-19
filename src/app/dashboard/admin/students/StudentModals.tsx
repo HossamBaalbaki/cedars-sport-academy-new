@@ -602,7 +602,10 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
             <label className="block text-white/50 text-xs mb-1.5">Program / Sport *</label>
             <select value={programId} onChange={(e) => { setProgramId(e.target.value); const p = programs.find(x => x.id === e.target.value); if (p) setAmount(String(p.price)); }} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm">
               <option value="">Select program...</option>
-              {programs.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.price} {p.currency ?? "QAR"}</option>)}
+              {programs.map((p) => {
+                const loc = p.locations?.[0]?.location?.name;
+                return <option key={p.id} value={p.id}>{p.name}{loc ? ` · ${loc}` : ""} — {p.price} {p.currency ?? "QAR"}</option>;
+              })}
             </select>
           </div>
 
