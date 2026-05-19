@@ -19,7 +19,11 @@ interface PaymentRow {
   notes?: string | null;
   studentFirstName?: string | null;
   studentLastName?: string | null;
+  studentCode?: string | null;
+  dateOfBirth?: string | null;
   programName?: string | null;
+  locationName?: string | null;
+  coachName?: string | null;
   parentFirstName?: string | null;
   parentLastName?: string | null;
 }
@@ -38,6 +42,99 @@ const STATUS_STYLES: Record<string, string> = {
   FAILED: "bg-rose-500/10 text-rose-400 border-rose-500/20",
 };
 
+function InvoiceModal({ payment, onClose }: { payment: PaymentRow; onClose: () => void }) {
+  const studentName = [payment.studentFirstName, payment.studentLastName].filter(Boolean).join(" ") || "—";
+  const parentName = [payment.parentFirstName, payment.parentLastName].filter(Boolean).join(" ") || "—";
+  const dob = payment.dateOfBirth
+    ? new Date(payment.dateOfBirth).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+    : "—";
+  const paymentDate = payment.paidAt
+    ? new Date(payment.paidAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+    : new Date(payment.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+
+  const rows = [
+    { section: "Student Information", items: [
+      { label: "Student Name", value: studentName },
+      { label: "CSA Code", value: payment.studentCode || "—" },
+      { label: "Date of Birth", value: dob },
+      { label: "Parent", value: parentName },
+    ]},
+    { section: "Program Details", items: [
+      { label: "Program / Sport", value: payment.programName || "—" },
+      { label: "Location", value: payment.locationName || "—" },
+      { label: "Coach", value: payment.coachName || "—" },
+    ]},
+    { section: "Payment Details", items: [
+      { label: "Date of Payment", value: paymentDate },
+      { label: "Payment Method", value: payment.method || "—" },
+      { label: "Transaction Code", value: payment.transactionId || "—", mono: true },
+      { label: "Status", value: payment.status },
+    ]},
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-[#00A651] px-6 py-5 text-center">
+          <div className="text-white font-black text-xl tracking-wide">Cedars Sport Academy</div>
+          <div className="text-white/70 text-xs mt-0.5 tracking-widest uppercase">Payment Receipt</div>
+        </div>
+
+        {/* Ref + Amount */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100">
+          <div>
+            <div className="text-gray-400 text-xs uppercase tracking-wider">Transaction Ref</div>
+            <div className="font-mono text-sm font-semibold text-gray-700 mt-0.5">{payment.transactionId || "—"}</div>
+          </div>
+          <div className="text-right">
+            <span className="inline-block bg-[#00A651] text-white text-xs font-bold px-3 py-1 rounded-full mb-1">{payment.status}</span>
+            <div className="text-2xl font-black text-gray-800">{payment.amount?.toLocaleString()} <span className="text-sm font-semibold text-gray-400">{payment.currency || "QAR"}</span></div>
+          </div>
+        </div>
+
+        {/* Detail sections */}
+        <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+          {rows.map((section) => (
+            <div key={section.section}>
+              <div className="text-[10px] font-bold text-[#00A651] uppercase tracking-widest mb-2 border-b border-[#00A651]/20 pb-1">{section.section}</div>
+              <table className="w-full text-sm">
+                <tbody>
+                  {section.items.map((item) => (
+                    <tr key={item.label} className="border-b border-gray-50 last:border-0">
+                      <td className="py-1.5 text-gray-400 w-[45%]">{item.label}</td>
+                      <td className={`py-1.5 font-semibold text-gray-700 ${(item as any).mono ? "font-mono text-xs" : ""}`}>{item.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+          <button
+            onClick={() => window.print()}
+            className="flex-1 px-4 py-2 rounded-xl bg-[#00A651] text-white text-sm font-semibold hover:bg-[#00A651]/80 transition-all"
+          >
+            🖨️ Print
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 rounded-xl bg-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-300 transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPaymentsPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
@@ -48,6 +145,7 @@ export default function AdminPaymentsPage() {
   const [methodFilter, setMethodFilter] = useState<string>("ALL");
   const [error, setError] = useState<string | null>(null);
   const [markingPaid, setMarkingPaid] = useState<string | null>(null);
+  const [invoicePayment, setInvoicePayment] = useState<PaymentRow | null>(null);
 
   const [singleChildQar, setSingleChildQar] = useState<number>(400);
   const [multiChildQar, setMultiChildQar] = useState<number>(350);
@@ -135,6 +233,10 @@ export default function AdminPaymentsPage() {
 
   return (
     <div className="min-h-screen bg-dark-900 pt-20">
+      {invoicePayment && (
+        <InvoiceModal payment={invoicePayment} onClose={() => setInvoicePayment(null)} />
+      )}
+
       <div className="bg-gradient-to-r from-dark-800 via-dark-800 to-dark-900 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
@@ -353,15 +455,24 @@ export default function AdminPaymentsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {p.status === "PENDING" && (
+                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() => markPaid(p.id)}
-                            disabled={markingPaid === p.id}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/30 disabled:opacity-50 transition-all"
+                            onClick={() => setInvoicePayment(p)}
+                            className="px-3 py-1.5 rounded-lg bg-white/5 text-white/60 text-xs font-medium hover:bg-white/10 hover:text-white transition-all border border-white/10"
+                            title="View Invoice"
                           >
-                            {markingPaid === p.id ? "..." : "✅ Mark Paid"}
+                            📄 Invoice
                           </button>
-                        )}
+                          {p.status === "PENDING" && (
+                            <button
+                              onClick={() => markPaid(p.id)}
+                              disabled={markingPaid === p.id}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/30 disabled:opacity-50 transition-all"
+                            >
+                              {markingPaid === p.id ? "..." : "✅ Mark Paid"}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

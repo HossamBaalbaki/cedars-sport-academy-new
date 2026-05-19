@@ -556,11 +556,39 @@ export function CancelModal({ studentName, programName, cancelling, onConfirm, o
 
 // ── Admin Enroll Modal ────────────────────────────────────────────────────────
 
+const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function fmt12(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const ampm = h >= 12 ? "pm" : "am";
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, "0")}${ampm}`;
+}
+
 export interface ProgramOption {
-  id: string; name: string; price: number; currency?: string;
-  coach?: { user?: { firstName: string; lastName: string } } | null;
+  id: string;
+  name: string;
+  price: number;
+  currency?: string;
+  icon?: string | null;
+  image?: string | null;
+  level?: string | null;
+  ageGroup?: { name: string; minAge?: number; maxAge?: number } | null;
+  coach?: {
+    user?: {
+      firstName: string;
+      lastName: string;
+      avatar?: string | null;
+    };
+  } | null;
   locations?: { location?: { name: string } }[];
-  schedules?: { location?: { name: string } | null }[];
+  schedules?: {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    isActive?: boolean;
+    location?: { name: string } | null;
+  }[];
 }
 
 interface EnrollModalProps {
@@ -574,12 +602,23 @@ interface EnrollModalProps {
 
 export function EnrollModal({ student, programs, saving, error, onSave, onClose }: EnrollModalProps) {
   const [programId, setProgramId] = useState("");
+  const [search, setSearch] = useState("");
   const [sessionsCount, setSessionsCount] = useState(8);
   const [isPaid, setIsPaid] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [amount, setAmount] = useState("");
 
-  const selectedProgram = programs.find((p) => p.id === programId);
+  const filtered = programs.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.coach?.user?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+    p.coach?.user?.lastName?.toLowerCase().includes(search.toLowerCase()) ||
+    p.locations?.some((l) => l.location?.name.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  function selectProgram(p: ProgramOption) {
+    setProgramId(p.id);
+    setAmount(String(p.price));
+  }
 
   function handleSave() {
     if (!programId) return;
@@ -589,8 +628,10 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-dark-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+      <div className="relative w-full max-w-2xl bg-dark-800 border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 flex-shrink-0">
           <div>
             <h2 className="text-lg font-bold text-white">🏅 Enroll Student</h2>
             <p className="text-white/40 text-xs mt-0.5">{student.firstName} {student.lastName}</p>
@@ -598,43 +639,126 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
           <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-all">✕</button>
         </div>
 
-        <div className="p-6 space-y-4">
+        {/* Scrollable body */}
+        <div className="overflow-y-auto flex-1 p-6 space-y-5">
           {error && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
 
-          {/* Program selector */}
+          {/* Search */}
           <div>
-            <label className="block text-white/50 text-xs mb-1.5">Program / Sport *</label>
-            <select value={programId} onChange={(e) => { setProgramId(e.target.value); const p = programs.find(x => x.id === e.target.value); if (p) setAmount(String(p.price)); }} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm">
-              <option value="">Select program...</option>
-              {programs.map((p) => {
-                const loc = p.locations?.[0]?.location?.name
-                  || p.schedules?.find(s => s.location?.name)?.location?.name;
-                return <option key={p.id} value={p.id}>{p.name}{loc ? ` · ${loc}` : ""} — {p.price} {p.currency ?? "QAR"}</option>;
-              })}
-            </select>
-          </div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-white/50 text-xs uppercase tracking-wider">Select Program *</label>
+              <span className="text-white/30 text-xs">{filtered.length} available</span>
+            </div>
+            <input
+              type="text"
+              placeholder="Search by name, coach, location…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-dark-900 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 mb-3"
+            />
 
-          {/* Program info */}
-          {selectedProgram && (
-            <div className="p-3 rounded-xl bg-white/3 border border-white/8 space-y-1.5">
-              {selectedProgram.coach?.user && (
-                <div className="flex items-center gap-2 text-xs text-white/60">
-                  <span>👨‍🏫</span>
-                  <span>Coach: <span className="text-white/80 font-medium">{selectedProgram.coach.user.firstName} {selectedProgram.coach.user.lastName}</span></span>
-                </div>
-              )}
-              {selectedProgram.locations?.[0]?.location && (
-                <div className="flex items-center gap-2 text-xs text-white/60">
-                  <span>📍</span>
-                  <span>Location: <span className="text-white/80 font-medium">{selectedProgram.locations[0].location.name}</span></span>
-                </div>
+            {/* Program cards */}
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {filtered.length === 0 ? (
+                <div className="text-center py-8 text-white/30 text-sm">No programs match your search</div>
+              ) : (
+                filtered.map((p) => {
+                  const isSelected = programId === p.id;
+                  const activeSchedules = (p.schedules ?? []).filter((s) => s.isActive !== false);
+                  const locationNames = [
+                    ...(p.locations ?? []).map((l) => l.location?.name).filter(Boolean),
+                    ...(activeSchedules.map((s) => s.location?.name).filter(Boolean)),
+                  ];
+                  const uniqueLocations = [...new Set(locationNames)] as string[];
+
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => selectProgram(p)}
+                      className={`relative cursor-pointer rounded-xl border p-4 transition-all ${
+                        isSelected
+                          ? "border-lebanon-green bg-lebanon-green/8 ring-1 ring-lebanon-green/20"
+                          : "border-white/8 bg-white/3 hover:border-white/20 hover:bg-white/5"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        {/* Left: name + details */}
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          {p.icon && (
+                            <span className="text-2xl flex-shrink-0 mt-0.5">{p.icon}</span>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-white text-sm">{p.name}</span>
+                              {p.level && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/8 text-white/40 border border-white/10">{p.level}</span>
+                              )}
+                              {p.ageGroup && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400/70 border border-blue-500/15">{p.ageGroup.name}</span>
+                              )}
+                            </div>
+
+                            {/* Coach */}
+                            {p.coach?.user && (
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                {p.coach.user.avatar ? (
+                                  <img src={p.coach.user.avatar} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full bg-lebanon-green/20 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-[9px] font-bold text-lebanon-green">{p.coach.user.firstName[0]}</span>
+                                  </div>
+                                )}
+                                <span className="text-white/50 text-xs">Coach <span className="text-white/75 font-medium">{p.coach.user.firstName} {p.coach.user.lastName}</span></span>
+                              </div>
+                            )}
+
+                            {/* Locations */}
+                            {uniqueLocations.length > 0 && (
+                              <div className="flex items-center gap-1 mt-1.5 text-xs text-white/40">
+                                <span>📍</span>
+                                <span>{uniqueLocations.join(" · ")}</span>
+                              </div>
+                            )}
+
+                            {/* Schedules */}
+                            {activeSchedules.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {activeSchedules.map((s, i) => (
+                                  <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-white/5 text-white/50 border border-white/8">
+                                    <span className="font-semibold text-white/70">{DAYS_SHORT[s.dayOfWeek]}</span>
+                                    <span>{fmt12(s.startTime)}–{fmt12(s.endTime)}</span>
+                                    {s.location?.name && uniqueLocations.length > 1 && (
+                                      <span className="text-white/30">· {s.location.name}</span>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right: price + checkmark */}
+                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          <span className={`font-bold text-sm ${isSelected ? "text-lebanon-green" : "text-white/70"}`}>
+                            {p.price} <span className="text-xs font-normal opacity-60">{p.currency ?? "QAR"}</span>
+                          </span>
+                          {isSelected && (
+                            <div className="w-5 h-5 rounded-full bg-lebanon-green flex items-center justify-center">
+                              <span className="text-white text-[10px] font-bold">✓</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
-          )}
+          </div>
 
           {/* Sessions */}
           <div>
-            <label className="block text-white/50 text-xs mb-1.5">Sessions to assign</label>
+            <label className="block text-white/50 text-xs mb-1.5 uppercase tracking-wider">Sessions to assign</label>
             <div className="flex gap-2">
               {[4, 8, 12, 16].map((n) => (
                 <button key={n} onClick={() => setSessionsCount(n)} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all border ${sessionsCount === n ? "bg-lebanon-green text-white border-lebanon-green" : "bg-white/5 text-white/50 border-white/10 hover:border-white/30"}`}>{n}</button>
@@ -650,7 +774,7 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
               <div className="text-white/40 text-xs">Record payment now</div>
             </div>
             <button onClick={() => setIsPaid((v) => !v)} className={`relative w-11 h-6 rounded-full transition-colors ${isPaid ? "bg-lebanon-green" : "bg-white/10"}`}>
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${isPaid ? "left-5.5" : "left-0.5"}`} style={{ left: isPaid ? "22px" : "2px" }} />
+              <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all" style={{ left: isPaid ? "22px" : "2px" }} />
             </button>
           </div>
 
@@ -673,7 +797,8 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-white/5 flex gap-3">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-white/5 flex gap-3 flex-shrink-0">
           <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 text-sm font-medium transition-all">Cancel</button>
           <button onClick={handleSave} disabled={saving || !programId} className="flex-1 px-4 py-2.5 rounded-xl bg-lebanon-green hover:bg-lebanon-green/90 text-white text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
             {saving && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
