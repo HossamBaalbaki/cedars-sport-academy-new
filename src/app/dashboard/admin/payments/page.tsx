@@ -52,7 +52,8 @@ function InvoiceModal({ payment, onClose }: { payment: PaymentRow; onClose: () =
     ? new Date(payment.paidAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
     : new Date(payment.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
 
-  const rows = [
+  type InvoiceRow = { label: string; value: string; mono?: boolean };
+  const rows: { section: string; items: InvoiceRow[] }[] = [
     { section: "Student Information", items: [
       { label: "Student Name", value: studentName },
       { label: "CSA Code", value: payment.studentCode || "—" },
@@ -106,7 +107,7 @@ function InvoiceModal({ payment, onClose }: { payment: PaymentRow; onClose: () =
                   {section.items.map((item) => (
                     <tr key={item.label} className="border-b border-gray-50 last:border-0">
                       <td className="py-1.5 text-gray-400 w-[45%]">{item.label}</td>
-                      <td className={`py-1.5 font-semibold text-gray-700 ${(item as any).mono ? "font-mono text-xs" : ""}`}>{item.value}</td>
+                      <td className={`py-1.5 font-semibold text-gray-700 ${item.mono ? "font-mono text-xs" : ""}`}>{item.value}</td>
                     </tr>
                   ))}
                 </tbody>
