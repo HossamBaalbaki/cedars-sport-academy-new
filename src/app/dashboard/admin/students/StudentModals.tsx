@@ -411,7 +411,7 @@ export function ViewModal({
 
 // ── Create / Edit Modal ───────────────────────────────────────────────────────
 
-interface FormState { firstName: string; lastName: string; dateOfBirth: string; nationality: string; bloodType: string; medicalNotes: string; parentId: string; photo: string; }
+interface FormState { firstName: string; lastName: string; dateOfBirth: string; nationality: string; bloodType: string; medicalNotes: string; parentId: string; photo: string; newParentFirstName: string; newParentLastName: string; newParentEmail: string; newParentPhone: string; }
 
 interface EditModalProps {
   editing: Student | null;
@@ -462,11 +462,36 @@ export function EditModal({ editing, form, parents, saving, formError, onChange,
             </div>
           </div>
           <div>
-            <label className="block text-white/50 text-xs mb-1.5">Parent</label>
+            <label className="block text-white/50 text-xs mb-1.5">Parent — select existing</label>
             <select value={form.parentId} onChange={(e) => set("parentId", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm">
               <option value="">No parent assigned</option>
-              {parents.map((p) => <option key={p.id} value={p.id}>{p.firstName} {p.lastName} ({p.email})</option>)}
+              {parents.map((p) => <option key={p.id} value={p.id}>{p.firstName} {p.lastName} ({p.email}){p.phone ? ` · ${p.phone}` : ""}</option>)}
             </select>
+          </div>
+          <div className="relative flex items-center gap-3 py-1">
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-white/30 text-xs shrink-0">or create new parent</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-white/50 text-xs mb-1.5">Parent First Name</label>
+              <input value={form.newParentFirstName} onChange={(e) => set("newParentFirstName", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="First name" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs mb-1.5">Parent Last Name</label>
+              <input value={form.newParentLastName} onChange={(e) => set("newParentLastName", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="Last name" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-white/50 text-xs mb-1.5">Parent Email *</label>
+              <input type="email" value={form.newParentEmail} onChange={(e) => set("newParentEmail", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="parent@email.com" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs mb-1.5">Parent Phone</label>
+              <input type="tel" value={form.newParentPhone} onChange={(e) => set("newParentPhone", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="+974 ..." />
+            </div>
           </div>
           <div>
             <label className="block text-white/50 text-xs mb-1.5">Medical Notes</label>

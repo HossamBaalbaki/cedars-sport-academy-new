@@ -22,7 +22,7 @@ interface ExpiringEnrollment {
   sessionsRemaining: number;
 }
 
-const EMPTY_FORM = { firstName: "", lastName: "", dateOfBirth: "", nationality: "", bloodType: "", medicalNotes: "", parentId: "", photo: "" };
+const EMPTY_FORM = { firstName: "", lastName: "", dateOfBirth: "", nationality: "", bloodType: "", medicalNotes: "", parentId: "", photo: "", newParentFirstName: "", newParentLastName: "", newParentEmail: "", newParentPhone: "" };
 
 export default function AdminStudentsPage() {
   const { user, isAuthenticated, isLoading, token } = useAuth();
@@ -197,7 +197,7 @@ export default function AdminStudentsPage() {
   const openCreate = () => { setEditingStudent(null); setForm({ ...EMPTY_FORM }); setFormError(null); setModalOpen(true); };
   const openEdit = (s: Student) => {
     setEditingStudent(s);
-    setForm({ firstName: s.firstName || "", lastName: s.lastName || "", dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split("T")[0] : "", nationality: s.nationality || "", bloodType: s.bloodType || "", medicalNotes: s.medicalNotes || "", parentId: s.parentId || "", photo: s.photo || "" });
+    setForm({ firstName: s.firstName || "", lastName: s.lastName || "", dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split("T")[0] : "", nationality: s.nationality || "", bloodType: s.bloodType || "", medicalNotes: s.medicalNotes || "", parentId: s.parentId || "", photo: s.photo || "", newParentFirstName: "", newParentLastName: "", newParentEmail: "", newParentPhone: "" });
     setFormError(null);
     setModalOpen(true);
   };
@@ -208,8 +208,35 @@ export default function AdminStudentsPage() {
       setFormError("First name, last name, and date of birth are required.");
       return;
     }
+    const wantsNewParent = form.newParentEmail.trim() !== "";
+    if (wantsNewParent && (!form.newParentFirstName.trim() || !form.newParentLastName.trim())) {
+      setFormError("Parent first name and last name are required when creating a new parent.");
+      return;
+    }
     setSaving(true); setFormError(null);
     try {
+      let resolvedParentId = form.parentId;
+
+      if (wantsNewParent) {
+        const pr = await fetch(`${API}/users`, {
+          method: "POST",
+          headers: hdrs(),
+          body: JSON.stringify({
+            firstName: form.newParentFirstName.trim(),
+            lastName: form.newParentLastName.trim(),
+            email: form.newParentEmail.trim(),
+            phone: form.newParentPhone.trim() || undefined,
+          }),
+        });
+        if (!pr.ok) {
+          const e = await pr.json().catch(() => ({}));
+          setFormError(e.message || "Failed to create parent account");
+          return;
+        }
+        const pd = await pr.json();
+        resolvedParentId = pd.data.id;
+      }
+
       const body: Record<string, string> = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -218,7 +245,7 @@ export default function AdminStudentsPage() {
       if (form.nationality.trim()) body.nationality = form.nationality.trim();
       if (form.bloodType.trim()) body.bloodType = form.bloodType.trim();
       if (form.medicalNotes.trim()) body.medicalNotes = form.medicalNotes.trim();
-      if (form.parentId) body.parentId = form.parentId;
+      if (resolvedParentId) body.parentId = resolvedParentId;
       if (form.photo.trim()) body.photo = form.photo.trim();
       else if (editingStudent) body.photo = "";
       const r = await fetch(
