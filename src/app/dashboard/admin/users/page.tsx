@@ -150,6 +150,7 @@ export default function AdminUsersPage() {
   }), [token]);
 
   const fetchUsers = useCallback(async () => {
+    if (!token) return;
     setLoading(true); setError(null);
     try {
       const r = await fetch(`${API}/users`, { headers: hdrs() });
