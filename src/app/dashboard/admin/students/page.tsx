@@ -208,6 +208,20 @@ export default function AdminStudentsPage() {
       setFormError("First name, last name, and date of birth are required.");
       return;
     }
+    const dob = new Date(form.dateOfBirth);
+    if (isNaN(dob.getTime())) {
+      setFormError("Invalid date of birth.");
+      return;
+    }
+    const ageYears = (Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    if (ageYears < 2) {
+      setFormError("Student must be at least 2 years old.");
+      return;
+    }
+    if (ageYears > 80) {
+      setFormError("Date of birth is not valid (age over 80 years).");
+      return;
+    }
     setSaving(true); setFormError(null);
     try {
       const body: Record<string, string> = {

@@ -448,7 +448,15 @@ export function EditModal({ editing, form, parents, saving, formError, onChange,
           </div>
           <div>
             <label className="block text-white/50 text-xs mb-1.5">Date of Birth *</label>
-            <input type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm" />
+            <input
+              type="date"
+              value={form.dateOfBirth}
+              onChange={(e) => set("dateOfBirth", e.target.value)}
+              min={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 80); return d.toISOString().split("T")[0]; })()}
+              max={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 2); return d.toISOString().split("T")[0]; })()}
+              className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm"
+            />
+            <p className="text-white/25 text-xs mt-1">Age must be between 2 and 80 years</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
