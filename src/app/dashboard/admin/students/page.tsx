@@ -197,7 +197,7 @@ export default function AdminStudentsPage() {
   const openCreate = () => { setEditingStudent(null); setForm({ ...EMPTY_FORM }); setFormError(null); setModalOpen(true); };
   const openEdit = (s: Student) => {
     setEditingStudent(s);
-    setForm({ firstName: s.firstName || "", lastName: s.lastName || "", dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split("T")[0] : "", nationality: s.nationality || "", bloodType: s.bloodType || "", medicalNotes: s.medicalNotes || "", parentId: s.parentId || "", photo: s.photo || "", newParentEmail: s.parentEmail || "", newParentPhone: s.parentPhone || "" });
+    setForm({ firstName: s.firstName || "", lastName: s.lastName || "", dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split("T")[0] : "", nationality: s.nationality || "", bloodType: s.bloodType || "", medicalNotes: s.medicalNotes || "", parentId: s.parentId || "", photo: s.photo || "", newParentEmail: s.parentEmail || s.parent?.email || "", newParentPhone: s.parentPhone || s.parent?.phone || "" });
     setFormError(null);
     setModalOpen(true);
   };
