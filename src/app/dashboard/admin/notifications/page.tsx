@@ -8,7 +8,6 @@ import { notificationsApi } from "@/lib/api";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b013e9830456";
-void API; void TENANT; // used only for parent list fetch
 
 type NotifType = "ANNOUNCEMENT" | "INFO" | "SUCCESS";
 
@@ -128,7 +127,7 @@ export default function AdminNotificationsPage() {
   function toggleParent(id: string) {
     setSelectedParents((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }

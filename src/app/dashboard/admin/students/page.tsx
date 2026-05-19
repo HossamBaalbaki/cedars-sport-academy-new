@@ -253,12 +253,6 @@ export default function AdminStudentsPage() {
     finally { setCancelling(false); }
   };
 
-  const openSessionsEditor = (enrollmentId: string, studentName: string, programName: string, current?: number) => {
-    const safeCurrent = Number.isFinite(Number(current)) ? Number(current) : 0;
-    setSessionsTarget({ enrollmentId, studentName, programName, current: safeCurrent });
-    setSessionsValue(String(safeCurrent));
-  };
-
   const handleSaveSessions = async () => {
     if (!sessionsTarget) return;
     const parsed = Number(sessionsValue);
