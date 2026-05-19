@@ -287,7 +287,7 @@ export default function AdminPaymentsPage() {
                     <th className="text-left px-4 py-3 text-white/40 text-xs uppercase">Amount</th>
                     <th className="text-left px-4 py-3 text-white/40 text-xs uppercase">Method</th>
                     <th className="text-left px-4 py-3 text-white/40 text-xs uppercase">Status</th>
-                    <th className="text-left px-4 py-3 text-white/40 text-xs uppercase">Transaction</th>
+                    <th className="text-left px-4 py-3 text-white/40 text-xs uppercase">Recorded by</th>
                     <th className="text-left px-4 py-3 text-white/40 text-xs uppercase">Date</th>
                     <th className="text-left px-4 py-3 text-white/40 text-xs uppercase">Actions</th>
                   </tr>
@@ -321,11 +321,35 @@ export default function AdminPaymentsPage() {
                           {p.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-white/50 font-mono">{p.transactionId || "—"}</td>
+                      <td className="px-4 py-3 text-xs">
+                        {(() => {
+                          const notes = p.notes || "";
+                          const adminMatch = notes.match(/(?:Renewal recorded by admin|Recorded by admin):\s*(.+)/i);
+                          const isRenewal = /renewal/i.test(notes);
+                          if (adminMatch) {
+                            return (
+                              <div>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium">
+                                  🛡️ {adminMatch[1].trim()}
+                                </span>
+                                {isRenewal && <div className="text-white/30 text-[10px] mt-0.5 pl-0.5">Renewal</div>}
+                              </div>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium">
+                              👤 Parent Portal
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="px-4 py-3 text-xs text-white/50">
                         <div>{new Date(p.createdAt).toLocaleDateString()}</div>
                         {p.paidAt && (
                           <div className="text-emerald-400/60 text-[10px]">Paid {new Date(p.paidAt).toLocaleDateString()}</div>
+                        )}
+                        {p.transactionId && (
+                          <div className="text-white/25 font-mono text-[9px] mt-0.5">{p.transactionId}</div>
                         )}
                       </td>
                       <td className="px-4 py-3">

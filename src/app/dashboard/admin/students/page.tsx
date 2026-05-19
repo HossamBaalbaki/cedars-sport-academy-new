@@ -3,11 +3,12 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { studentsApi } from "@/lib/api";
+import { studentsApi, programsApi } from "@/lib/api";
 import {
   Student, Parent, AttendanceRecord,
-  SBadge, getMin, calcAge,
-  AttendanceModal, ViewModal, EditModal, DeleteModal, CancelModal,
+  calcAge,
+  AttendanceModal, ViewModal, EditModal, DeleteModal, CancelModal, IDCardModal,
+  EnrollModal, RenewModal, type ProgramOption,
 } from "./StudentModals";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
@@ -21,7 +22,7 @@ interface ExpiringEnrollment {
   sessionsRemaining: number;
 }
 
-const EMPTY_FORM = { firstName: "", lastName: "", dateOfBirth: "", nationality: "", bloodType: "", medicalNotes: "", parentId: "" };
+const EMPTY_FORM = { firstName: "", lastName: "", dateOfBirth: "", nationality: "", bloodType: "", medicalNotes: "", parentId: "", photo: "" };
 
 export default function AdminStudentsPage() {
   const { user, isAuthenticated, isLoading, token } = useAuth();
@@ -57,6 +58,9 @@ export default function AdminStudentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // ID Card
+  const [idCardStudent, setIdCardStudent] = useState<Student | null>(null);
+
   // Cancel enrollment
   const [cancelTarget, setCancelTarget] = useState<{ enrollmentId: string; studentName: string; programName: string } | null>(null);
   const [cancelling, setCancelling] = useState(false);
@@ -65,6 +69,28 @@ export default function AdminStudentsPage() {
   const [sessionsTarget, setSessionsTarget] = useState<{ enrollmentId: string; studentName: string; programName: string; current: number } | null>(null);
   const [sessionsValue, setSessionsValue] = useState<string>("");
   const [savingSessions, setSavingSessions] = useState(false);
+
+  // Programs list (for enroll modal)
+  const [programs, setPrograms] = useState<ProgramOption[]>([]);
+
+  // Admin Enroll
+  const [enrollTarget, setEnrollTarget] = useState<Student | null>(null);
+  const [enrollSaving, setEnrollSaving] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+
+  // Admin Renew
+  const [renewTarget, setRenewTarget] = useState<{ student: Student; enrollmentId: string; programName: string } | null>(null);
+  const [renewSaving, setRenewSaving] = useState(false);
+  const [renewError, setRenewError] = useState<string | null>(null);
+
+  // Toggle enrollment active
+  const [togglingEnrollment, setTogglingEnrollment] = useState<string | null>(null);
+
+  // Toggle student isActive
+  const [togglingStudent, setTogglingStudent] = useState<string | null>(null);
+
+  // Status filter
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE" | "NO_ENROLLMENT">("ALL");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push("/login");
@@ -104,7 +130,12 @@ export default function AdminStudentsPage() {
     } catch { /* silent */ }
   }, [token]);
 
-  useEffect(() => { fetchStudents(); fetchParents(); fetchExpiring(); }, [fetchStudents, fetchParents, fetchExpiring]);
+  const fetchPrograms = useCallback(async () => {
+    try { const r = await programsApi.getAll(); setPrograms((r.data as ProgramOption[]) || []); }
+    catch { /* silent */ }
+  }, []);
+
+  useEffect(() => { fetchStudents(); fetchParents(); fetchExpiring(); fetchPrograms(); }, [fetchStudents, fetchParents, fetchExpiring, fetchPrograms]);
 
   const openAttendance = useCallback(async (s: Student) => {
     setAttendanceStudent(s);
@@ -118,10 +149,55 @@ export default function AdminStudentsPage() {
     finally { setAttendanceLoading(false); }
   }, [hdrs]);
 
+  const handleToggleStudent = async (s: Student) => {
+    setTogglingStudent(s.id);
+    try {
+      await studentsApi.toggleActive(s.id);
+      await fetchStudents();
+      setViewStudent((prev) => prev?.id === s.id ? { ...prev, isActive: !(prev.isActive !== false) } : prev);
+    }
+    catch { /* silent */ }
+    finally { setTogglingStudent(null); }
+  };
+
+  const handleAdminEnroll = async (data: { programId: string; sessionsCount: number; isPaid: boolean; paymentMethod: string; amount: number }) => {
+    if (!enrollTarget) return;
+    setEnrollSaving(true); setEnrollError(null);
+    try {
+      await studentsApi.adminEnroll(enrollTarget.id, data);
+      setEnrollTarget(null); fetchStudents(); fetchExpiring();
+    } catch (e) { setEnrollError(e instanceof Error ? e.message : "Failed to enroll"); }
+    finally { setEnrollSaving(false); }
+  };
+
+  const handleAdminRenew = async (data: { sessionsCount: number; paymentMethod: string; amount: number }) => {
+    if (!renewTarget) return;
+    setRenewSaving(true); setRenewError(null);
+    try {
+      await studentsApi.adminRenew(renewTarget.student.id, renewTarget.enrollmentId, data);
+      setRenewTarget(null); fetchStudents(); fetchExpiring();
+    } catch (e) { setRenewError(e instanceof Error ? e.message : "Failed to renew"); }
+    finally { setRenewSaving(false); }
+  };
+
+  const handleToggleEnrollment = async (student: Student, enrollmentId: string) => {
+    setTogglingEnrollment(enrollmentId);
+    try {
+      await studentsApi.toggleEnrollment(student.id, enrollmentId);
+      await fetchStudents();
+      setViewStudent((prev) => prev?.id === student.id ? {
+        ...prev,
+        enrollments: prev.enrollments?.map((e) => e.id === enrollmentId ? { ...e, isActive: !e.isActive } : e),
+      } : prev);
+    }
+    catch { /* silent */ }
+    finally { setTogglingEnrollment(null); }
+  };
+
   const openCreate = () => { setEditingStudent(null); setForm({ ...EMPTY_FORM }); setFormError(null); setModalOpen(true); };
   const openEdit = (s: Student) => {
     setEditingStudent(s);
-    setForm({ firstName: s.firstName || "", lastName: s.lastName || "", dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split("T")[0] : "", nationality: s.nationality || "", bloodType: s.bloodType || "", medicalNotes: s.medicalNotes || "", parentId: s.parentId || "" });
+    setForm({ firstName: s.firstName || "", lastName: s.lastName || "", dateOfBirth: s.dateOfBirth ? s.dateOfBirth.split("T")[0] : "", nationality: s.nationality || "", bloodType: s.bloodType || "", medicalNotes: s.medicalNotes || "", parentId: s.parentId || "", photo: s.photo || "" });
     setFormError(null);
     setModalOpen(true);
   };
@@ -143,6 +219,8 @@ export default function AdminStudentsPage() {
       if (form.bloodType.trim()) body.bloodType = form.bloodType.trim();
       if (form.medicalNotes.trim()) body.medicalNotes = form.medicalNotes.trim();
       if (form.parentId) body.parentId = form.parentId;
+      if (form.photo.trim()) body.photo = form.photo.trim();
+      else if (editingStudent) body.photo = "";
       const r = await fetch(
         editingStudent ? `${API}/students/${editingStudent.id}` : `${API}/students`,
         { method: editingStudent ? "PATCH" : "POST", headers: hdrs(), body: JSON.stringify(body) }
@@ -212,11 +290,26 @@ export default function AdminStudentsPage() {
     }
   };
 
-  const filtered = students.filter((s) =>
-    `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
-    s.parent?.email?.toLowerCase().includes(search.toLowerCase()) ||
-    s.parent?.firstName?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = students.filter((s) => {
+    const matchesSearch =
+      `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+      s.parent?.email?.toLowerCase().includes(search.toLowerCase()) ||
+      s.parent?.firstName?.toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+    const isActive = s.isActive !== false;
+    const hasEnrollment = (s.enrollments?.length ?? 0) > 0;
+    if (statusFilter === "ACTIVE") return isActive;
+    if (statusFilter === "INACTIVE") return !isActive;
+    if (statusFilter === "NO_ENROLLMENT") return !hasEnrollment;
+    return true;
+  });
+
+  const counts = {
+    ALL: students.length,
+    ACTIVE: students.filter((s) => s.isActive !== false).length,
+    INACTIVE: students.filter((s) => s.isActive === false).length,
+    NO_ENROLLMENT: students.filter((s) => (s.enrollments?.length ?? 0) === 0).length,
+  };
 
   if (isLoading) {
     return (
@@ -235,7 +328,9 @@ export default function AdminStudentsPage() {
             <Link href="/dashboard/admin" className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition-all">←</Link>
             <div>
               <h1 className="text-2xl font-black text-white">👥 Students</h1>
-              <p className="text-white/40 text-sm">{students.length} total students</p>
+              <p className="text-white/40 text-sm">
+                {statusFilter !== "ALL" || search ? `${filtered.length} of ${students.length}` : students.length} students
+              </p>
             </div>
           </div>
           <button onClick={openCreate} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lebanon-green text-white font-semibold text-sm hover:bg-lebanon-green/90 transition-all shadow-lg shadow-lebanon-green/20">
@@ -276,8 +371,8 @@ export default function AdminStudentsPage() {
           </div>
         )}
 
-        {/* Search */}
-        <div className="mb-6">
+        {/* Search + Filters */}
+        <div className="mb-6 space-y-3">
           <input
             type="text"
             placeholder="Search by name or parent email..."
@@ -285,6 +380,28 @@ export default function AdminStudentsPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-4 py-3 rounded-xl bg-dark-800 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 text-sm"
           />
+          <div className="flex gap-2 flex-wrap">
+            {(["ALL", "ACTIVE", "INACTIVE", "NO_ENROLLMENT"] as const).map((f) => {
+              const labels: Record<string, string> = { ALL: "All", ACTIVE: "✅ Active", INACTIVE: "⛔ Inactive", NO_ENROLLMENT: "📭 No Enrollment" };
+              const active = statusFilter === f;
+              const colorMap: Record<string, string> = {
+                ALL: active ? "bg-white/15 text-white border-white/20" : "bg-dark-800 text-white/50 border-white/10 hover:text-white",
+                ACTIVE: active ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" : "bg-dark-800 text-white/50 border-white/10 hover:text-emerald-400",
+                INACTIVE: active ? "bg-red-500/20 text-red-400 border-red-500/40" : "bg-dark-800 text-white/50 border-white/10 hover:text-red-400",
+                NO_ENROLLMENT: active ? "bg-orange-500/20 text-orange-400 border-orange-500/40" : "bg-dark-800 text-white/50 border-white/10 hover:text-orange-400",
+              };
+              return (
+                <button
+                  key={f}
+                  onClick={() => setStatusFilter(f)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${colorMap[f]}`}
+                >
+                  {labels[f]}
+                  <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-[10px] font-bold">{counts[f]}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Error */}
@@ -305,10 +422,17 @@ export default function AdminStudentsPage() {
         ) : filtered.length === 0 ? (
           <div className="glass-card p-12 text-center">
             <div className="text-4xl mb-3">👥</div>
-            <p className="text-white/40 mb-4">{search ? "No students match your search" : "No students yet"}</p>
-            {!search && (
+            <p className="text-white/40 mb-4">
+              {search ? "No students match your search" : statusFilter !== "ALL" ? "No students in this category" : "No students yet"}
+            </p>
+            {!search && statusFilter === "ALL" && (
               <button onClick={openCreate} className="px-5 py-2.5 rounded-xl bg-lebanon-green text-white font-semibold text-sm hover:bg-lebanon-green/90 transition-all">
                 Add First Student
+              </button>
+            )}
+            {statusFilter !== "ALL" && (
+              <button onClick={() => setStatusFilter("ALL")} className="px-4 py-2 rounded-xl bg-white/5 text-white/50 text-sm hover:bg-white/10 transition-all">
+                Clear filter
               </button>
             )}
           </div>
@@ -318,25 +442,36 @@ export default function AdminStudentsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/5">
-                    {["Student", "Age", "Parent", "Programs", "Sessions", "Blood", "Joined", "Actions"].map((h) => (
+                    {["Student", "Age", "Parent", "Programs", "Blood", "Joined", "Actions"].map((h) => (
                       <th key={h} className={`text-white/40 text-xs font-semibold uppercase tracking-wider px-6 py-4 ${h === "Actions" ? "text-right" : "text-left"}`}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {filtered.map((s) => {
-                    const minSess = getMin(s.enrollments);
+                    const rowActive = s.isActive !== false;
                     return (
-                      <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
+                      <tr
+                        key={s.id}
+                        className={`transition-colors border-l-2 ${rowActive ? "border-l-emerald-500/50 hover:bg-emerald-500/[0.03]" : "border-l-red-500/50 hover:bg-red-500/[0.03] opacity-75"}`}
+                      >
                         {/* Student */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500/30 to-blue-700/30 flex items-center justify-center text-sm font-bold text-blue-400 flex-shrink-0">
-                              {s.firstName?.charAt(0)}{s.lastName?.charAt(0)}
+                            <div className="relative flex-shrink-0">
+                              {s.photo
+                                ? <img src={s.photo} alt={s.firstName} className="w-9 h-9 rounded-full object-cover border border-white/10" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                : <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${rowActive ? "bg-gradient-to-br from-emerald-500/20 to-emerald-700/20 text-emerald-400" : "bg-gradient-to-br from-red-500/10 to-red-700/10 text-red-400/60"}`}>{s.firstName?.charAt(0)}{s.lastName?.charAt(0)}</div>
+                              }
+                              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-dark-800 ${rowActive ? "bg-emerald-400" : "bg-red-500"}`} />
                             </div>
                             <div>
                               <div className="text-white text-sm font-medium">{s.firstName} {s.lastName}</div>
-                              {s.nationality && <div className="text-white/30 text-xs">{s.nationality}</div>}
+                              {s.studentCode
+                                ? <div className="text-lebanon-green/70 text-xs font-mono">{s.studentCode}</div>
+                                : s.nationality
+                                  ? <div className="text-white/30 text-xs">{s.nationality}</div>
+                                  : null}
                             </div>
                           </div>
                         </td>
@@ -355,28 +490,14 @@ export default function AdminStudentsPage() {
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-1">
                             {s.enrollments?.length ? s.enrollments.slice(0, 3).map((e) => (
-                              <span key={e.id} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-lebanon-green/10 text-lebanon-green text-xs border border-lebanon-green/20">
+                              <span key={e.id} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${e.isActive !== false ? "bg-lebanon-green/10 text-lebanon-green border-lebanon-green/20" : "bg-white/5 text-white/30 border-white/10"}`}>
                                 {e.program?.name || "Program"}
-                                <span className="text-white/50">·</span>
-                                <button
-                                  onClick={() => openSessionsEditor(e.id, `${s.firstName} ${s.lastName}`, e.program?.name || "Program", e.sessionsRemaining)}
-                                  className="px-1 rounded bg-white/10 hover:bg-white/20 text-white/80 hover:text-white"
-                                  title="Edit sessions"
-                                >
-                                  {Number.isFinite(Number(e.sessionsRemaining)) ? e.sessionsRemaining : 0}
-                                </button>
-                                <button
-                                  onClick={() => setCancelTarget({ enrollmentId: e.id, studentName: `${s.firstName} ${s.lastName}`, programName: e.program?.name || "Program" })}
-                                  className="w-3.5 h-3.5 rounded-full bg-lebanon-green/20 hover:bg-red-500/40 hover:text-red-300 flex items-center justify-center transition-all leading-none"
-                                  title="Cancel enrollment"
-                                >×</button>
+                                <span className="font-bold">{Number.isFinite(Number(e.sessionsRemaining)) ? `·${e.sessionsRemaining}` : ""}</span>
                               </span>
                             )) : <span className="text-white/30 text-xs">None</span>}
                             {(s.enrollments?.length || 0) > 3 && <span className="text-white/30 text-xs">+{(s.enrollments?.length || 0) - 3}</span>}
                           </div>
                         </td>
-                        {/* Sessions */}
-                        <td className="px-6 py-4"><SBadge min={minSess} /></td>
                         {/* Blood */}
                         <td className="px-6 py-4">
                           {s.bloodType
@@ -388,9 +509,8 @@ export default function AdminStudentsPage() {
                         {/* Actions */}
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-1.5">
-                            <button onClick={() => setViewStudent(s)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/20 hover:text-blue-400 text-white/40 flex items-center justify-center transition-all text-sm" title="View">👁️</button>
-                            <button onClick={() => openAttendance(s)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-purple-500/20 hover:text-purple-400 text-white/40 flex items-center justify-center transition-all text-sm" title="Attendance">📊</button>
-                            <button onClick={() => openEdit(s)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-lebanon-green/20 hover:text-lebanon-green text-white/40 flex items-center justify-center transition-all text-sm" title="Edit">✏️</button>
+                            <button onClick={() => setViewStudent(s)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-blue-500/20 hover:text-blue-400 text-white/40 flex items-center justify-center transition-all text-sm" title="View profile">👁️</button>
+                            <button onClick={() => setIdCardStudent(s)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-lebanon-green/20 hover:text-lebanon-green text-white/40 flex items-center justify-center transition-all text-sm" title="ID Card">🪪</button>
                             <button onClick={() => setDeleteTarget(s)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-white/40 flex items-center justify-center transition-all text-sm" title="Delete">🗑️</button>
                           </div>
                         </td>
@@ -405,6 +525,10 @@ export default function AdminStudentsPage() {
       </div>
 
       {/* Modals */}
+      {idCardStudent && (
+        <IDCardModal student={idCardStudent} onClose={() => setIdCardStudent(null)} />
+      )}
+
       {attendanceStudent && (
         <AttendanceModal
           student={attendanceStudent}
@@ -422,6 +546,12 @@ export default function AdminStudentsPage() {
           onClose={() => setViewStudent(null)}
           onEdit={() => { openEdit(viewStudent); setViewStudent(null); }}
           onAttendance={() => { openAttendance(viewStudent); setViewStudent(null); }}
+          onEnroll={() => { setEnrollTarget(viewStudent); setViewStudent(null); }}
+          onToggleActive={() => handleToggleStudent(viewStudent)}
+          togglingStudent={togglingStudent === viewStudent.id}
+          onRenew={(enrollmentId, programName) => { setRenewTarget({ student: viewStudent, enrollmentId, programName }); setViewStudent(null); }}
+          onToggleEnrollment={(enrollmentId) => handleToggleEnrollment(viewStudent, enrollmentId)}
+          togglingEnrollment={togglingEnrollment}
         />
       )}
 
@@ -489,6 +619,28 @@ export default function AdminStudentsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {enrollTarget && (
+        <EnrollModal
+          student={enrollTarget}
+          programs={programs}
+          saving={enrollSaving}
+          error={enrollError}
+          onSave={handleAdminEnroll}
+          onClose={() => { setEnrollTarget(null); setEnrollError(null); }}
+        />
+      )}
+
+      {renewTarget && (
+        <RenewModal
+          student={renewTarget.student}
+          programName={renewTarget.programName}
+          saving={renewSaving}
+          error={renewError}
+          onSave={handleAdminRenew}
+          onClose={() => { setRenewTarget(null); setRenewError(null); }}
+        />
       )}
     </div>
   );

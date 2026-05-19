@@ -12,7 +12,7 @@ interface Coach {
   id: string; userId: string; bio?: string; experience?: number;
   certifications?: string[]; instagram?: string; twitter?: string;
   linkedin?: string; featured: boolean; isActive: boolean;
-  user: { id: string; firstName: string; lastName: string; email: string; avatar?: string; isActive: boolean };
+  user: { id: string; firstName: string; lastName: string; email: string; phone?: string; avatar?: string; isActive: boolean };
   createdAt: string;
 }
 
@@ -39,6 +39,9 @@ export default function AdminCoachesPage() {
 
   // Edit state
   const [editC, setEditC] = useState<Coach | null>(null);
+  const [eFN, setEFN] = useState(""); const [eLN, setELN] = useState("");
+  const [eEmail, setEEmail] = useState(""); const [ePhone, setEPhone] = useState("");
+  const [eActive, setEActive] = useState(true); const [ePwd, setEPwd] = useState("");
   const [eBio, setEBio] = useState(""); const [eExp, setEExp] = useState("");
   const [eCerts, setECerts] = useState(""); const [eIG, setEIG] = useState("");
   const [eTW, setETW] = useState(""); const [eLI, setELI] = useState("");
@@ -138,6 +141,12 @@ export default function AdminCoachesPage() {
 
   const openEdit = (c: Coach) => {
     setEditC(c);
+    setEFN(c.user?.firstName || "");
+    setELN(c.user?.lastName || "");
+    setEEmail(c.user?.email || "");
+    setEPhone(c.user?.phone || "");
+    setEActive(c.user?.isActive ?? true);
+    setEPwd("");
     setEBio(c.bio || "");
     setEExp(c.experience?.toString() || "");
     setECerts(c.certifications?.join(", ") || "");
@@ -151,9 +160,18 @@ export default function AdminCoachesPage() {
 
   const handleEdit = async () => {
     if (!editC) return;
+    if (!eFN.trim() || !eLN.trim() || !eEmail.trim()) { setEditErr("First name, last name and email are required"); return; }
     setEditSaving(true); setEditErr(null);
     try {
       const body: Record<string, unknown> = {
+        // User fields
+        firstName: eFN.trim(),
+        lastName: eLN.trim(),
+        email: eEmail.trim(),
+        phone: ePhone.trim() || undefined,
+        isActive: eActive,
+        ...(ePwd.trim() ? { password: ePwd.trim() } : {}),
+        // Coach profile fields
         bio: eBio.trim() || undefined,
         experience: eExp ? parseInt(eExp) : undefined,
         certifications: eCerts.trim() ? eCerts.split(",").map(s => s.trim()).filter(Boolean) : undefined,
@@ -161,7 +179,7 @@ export default function AdminCoachesPage() {
         twitter: eTW.trim() || undefined,
         linkedin: eLI.trim() || undefined,
         featured: eFeat,
-        photo: ePhoto.trim(),   // send even if empty so backend can clear it
+        photo: ePhoto.trim(),
       };
       const res = await fetch(`${API}/coaches/${editC.id}`, {
         method: "PATCH", headers: authHeaders(), body: JSON.stringify(body),
@@ -290,6 +308,7 @@ export default function AdminCoachesPage() {
                       {c.twitter && <span>🐦</span>}
                       {c.linkedin && <span>💼</span>}
                     </div>
+                    <Link href={`/dashboard/admin/coach-view/${c.userId}`} className="px-3 h-8 rounded-lg bg-lebanon-green/10 hover:bg-lebanon-green/20 text-lebanon-green flex items-center justify-center transition-all text-xs font-semibold border border-lebanon-green/20">Manage</Link>
                     <button onClick={() => openEdit(c)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-lebanon-green/20 text-white/40 flex items-center justify-center transition-all text-sm">✏️</button>
                     <button onClick={() => setDelC(c)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/40 flex items-center justify-center transition-all text-sm">🗑️</button>
                   </div>
@@ -314,6 +333,8 @@ export default function AdminCoachesPage() {
 
       <EditCoachModal
         coach={editC} saving={editSaving} err={editErr}
+        eFN={eFN} eLN={eLN} eEmail={eEmail} ePhone={ePhone} eActive={eActive} ePwd={ePwd}
+        setEFN={setEFN} setELN={setELN} setEEmail={setEEmail} setEPhone={setEPhone} setEActive={setEActive} setEPwd={setEPwd}
         bio={eBio} exp={eExp} certs={eCerts} ig={eIG} tw={eTW} li={eLI} feat={eFeat} photo={ePhoto}
         setBio={setEBio} setExp={setEExp} setCerts={setECerts}
         setIG={setEIG} setTW={setETW} setLI={setELI} setFeat={setEFeat} setPhoto={setEPhoto}

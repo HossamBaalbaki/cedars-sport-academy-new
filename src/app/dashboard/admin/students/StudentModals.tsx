@@ -1,4 +1,6 @@
 "use client";
+import { useState } from "react";
+import { useTenant } from "@/context/TenantContext";
 
 export interface Enrollment {
   id: string;
@@ -11,12 +13,17 @@ export interface Enrollment {
 
 export interface Student {
   id: string;
+  studentCode?: string | null;
   firstName: string;
   lastName: string;
   dateOfBirth?: string;
   nationality?: string;
   bloodType?: string;
+  photo?: string | null;
   medicalNotes?: string;
+  medicalCardNumber?: string | null;
+  school?: string;
+  coachNotes?: string;
   parentId?: string;
   isActive?: boolean;
   parent?: { id: string; firstName: string; lastName: string; email: string; phone?: string };
@@ -241,30 +248,87 @@ interface ViewModalProps {
   onClose: () => void;
   onEdit: () => void;
   onAttendance: () => void;
+  onEnroll: () => void;
+  onToggleActive: () => void;
+  togglingStudent: boolean;
+  onRenew: (enrollmentId: string, programName: string) => void;
+  onToggleEnrollment: (enrollmentId: string) => void;
+  togglingEnrollment: string | null;
 }
 
-export function ViewModal({ student, onClose, onEdit, onAttendance }: ViewModalProps) {
+export function ViewModal({
+  student, onClose, onEdit, onAttendance, onEnroll,
+  onToggleActive, togglingStudent,
+  onRenew, onToggleEnrollment, togglingEnrollment,
+}: ViewModalProps) {
+  const isActive = student.isActive !== false;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-dark-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
-          <h2 className="text-lg font-bold text-white">👤 Student Profile</h2>
+      <div className="relative w-full max-w-lg bg-dark-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 flex-shrink-0">
+          <h2 className="text-base font-bold text-white">👤 Student Profile</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-all">✕</button>
         </div>
-        <div className="p-6 space-y-4">
+
+        {/* Action toolbar */}
+        <div className="flex items-center gap-2 px-6 py-3 border-b border-white/5 bg-dark-900/40 flex-shrink-0 flex-wrap">
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-lebanon-green/10 hover:bg-lebanon-green/20 text-lebanon-green text-xs font-semibold border border-lebanon-green/20 transition-all"
+          >✏️ Edit</button>
+          <button
+            onClick={onEnroll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-semibold border border-blue-500/20 transition-all"
+          >🏅 Enroll</button>
+          <button
+            onClick={onAttendance}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-xs font-semibold border border-purple-500/20 transition-all"
+          >📊 Attendance</button>
+          <button
+            onClick={onToggleActive}
+            disabled={togglingStudent}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
+              isActive
+                ? "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
+                : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20"
+            }`}
+          >
+            {togglingStudent
+              ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+              : isActive ? "⏸ Deactivate" : "▶ Activate"}
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
+
           {/* Avatar + name */}
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/30 to-blue-700/30 flex items-center justify-center text-2xl font-bold text-blue-400">
-              {student.firstName?.charAt(0)}{student.lastName?.charAt(0)}
-            </div>
+            {student.photo
+              ? <img src={student.photo} alt={student.firstName} className="w-20 h-20 rounded-2xl object-cover border border-white/10 flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              : <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/30 to-blue-700/30 flex items-center justify-center text-3xl font-bold text-blue-400 flex-shrink-0">{student.firstName?.charAt(0)}{student.lastName?.charAt(0)}</div>
+            }
             <div>
-              <h3 className="text-xl font-bold text-white">{student.firstName} {student.lastName}</h3>
-              <p className="text-white/40 text-sm">Age {calcAge(student.dateOfBirth)}{student.nationality ? ` · ${student.nationality}` : ""}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-xl font-bold text-white">{student.firstName} {student.lastName}</h3>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${isActive ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+                  {isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+              <p className="text-white/40 text-sm mt-0.5">Age {calcAge(student.dateOfBirth)}{student.nationality ? ` · ${student.nationality}` : ""}</p>
+              {student.studentCode && (
+                <span className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-full bg-lebanon-green/10 border border-lebanon-green/25 text-lebanon-green text-xs font-mono font-semibold">
+                  🪪 {student.studentCode}
+                </span>
+              )}
             </div>
           </div>
+
           {/* Details grid */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {[
               { label: "Blood Type", value: student.bloodType || "—" },
               { label: "Date of Birth", value: student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : "—" },
@@ -279,24 +343,56 @@ export function ViewModal({ student, onClose, onEdit, onAttendance }: ViewModalP
               </div>
             ))}
           </div>
-          {/* Sessions */}
-          <div className="bg-dark-900/50 rounded-xl p-3">
-            <div className="text-white/30 text-xs mb-2">Enrollments & Sessions</div>
+
+          {/* Enrollments */}
+          <div className="bg-dark-900/50 rounded-xl p-4">
+            <div className="text-white/30 text-xs font-semibold uppercase tracking-wider mb-3">Enrollments</div>
             {student.enrollments?.length ? (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {student.enrollments.map((e) => {
                   const rem = e.sessionsRemaining ?? null;
-                  const cls = rem === null ? "text-white/40" : rem <= 0 ? "text-red-400" : rem === 1 ? "text-yellow-400" : "text-white/60";
+                  const sessColor = rem === null ? "text-white/40" : rem <= 0 ? "text-red-400" : rem <= 2 ? "text-yellow-400" : "text-emerald-400";
+                  const enrolled = e.isActive !== false;
                   return (
-                    <div key={e.id} className="flex items-center justify-between">
-                      <span className="text-white/70 text-sm">{e.program?.name || "Program"}</span>
-                      <span className={`text-sm font-medium ${cls}`}>{rem === null ? "—" : rem <= 0 ? "0 sessions 🔴" : rem === 1 ? "1 session ⚠️" : `${rem} sessions`}</span>
+                    <div key={e.id} className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${enrolled ? "bg-emerald-400" : "bg-white/20"}`} />
+                        <span className="text-white/70 text-sm truncate">{e.program?.name || "Program"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className={`text-sm font-bold ${sessColor}`}>
+                          {rem === null ? "—" : rem <= 0 ? "0 🔴" : rem === 1 ? "1 ⚠️" : rem}
+                          <span className="text-white/30 text-xs font-normal ml-0.5">sess</span>
+                        </span>
+                        {/* Renew */}
+                        <button
+                          onClick={() => onRenew(e.id, e.program?.name || "Program")}
+                          className="px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/25 text-blue-400 text-xs font-semibold border border-blue-500/20 transition-all"
+                          title="Renew sessions"
+                        >↻ Renew</button>
+                        {/* Toggle active */}
+                        <button
+                          onClick={() => onToggleEnrollment(e.id)}
+                          disabled={togglingEnrollment === e.id}
+                          className={`px-2 py-1 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
+                            enrolled
+                              ? "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
+                              : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20"
+                          }`}
+                          title={enrolled ? "Hide from coach roster" : "Show on coach roster"}
+                        >
+                          {togglingEnrollment === e.id
+                            ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                            : enrolled ? "● Active" : "○ Off"}
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             ) : <span className="text-white/30 text-sm">No active enrollments</span>}
           </div>
+
           {/* Medical notes */}
           {student.medicalNotes && (
             <div className="bg-red-500/5 border border-red-500/15 rounded-xl p-3">
@@ -304,11 +400,6 @@ export function ViewModal({ student, onClose, onEdit, onAttendance }: ViewModalP
               <div className="text-white/60 text-sm">{student.medicalNotes}</div>
             </div>
           )}
-          {/* Actions */}
-          <div className="flex gap-2 pt-2">
-            <button onClick={onAttendance} className="flex-1 px-4 py-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-sm font-medium transition-all border border-purple-500/20">📊 Attendance</button>
-            <button onClick={onEdit} className="flex-1 px-4 py-2.5 rounded-xl bg-lebanon-green/10 hover:bg-lebanon-green/20 text-lebanon-green text-sm font-medium transition-all border border-lebanon-green/20">✏️ Edit</button>
-          </div>
         </div>
       </div>
     </div>
@@ -317,7 +408,7 @@ export function ViewModal({ student, onClose, onEdit, onAttendance }: ViewModalP
 
 // ── Create / Edit Modal ───────────────────────────────────────────────────────
 
-interface FormState { firstName: string; lastName: string; dateOfBirth: string; nationality: string; bloodType: string; medicalNotes: string; parentId: string; }
+interface FormState { firstName: string; lastName: string; dateOfBirth: string; nationality: string; bloodType: string; medicalNotes: string; parentId: string; photo: string; }
 
 interface EditModalProps {
   editing: Student | null;
@@ -378,6 +469,27 @@ export function EditModal({ editing, form, parents, saving, formError, onChange,
             <label className="block text-white/50 text-xs mb-1.5">Medical Notes</label>
             <textarea value={form.medicalNotes} onChange={(e) => set("medicalNotes", e.target.value)} rows={3} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm resize-none" placeholder="Any medical conditions or notes..." />
           </div>
+          <div>
+            <label className="block text-white/50 text-xs mb-1.5">Photo URL</label>
+            <input
+              type="url"
+              value={form.photo}
+              onChange={(e) => set("photo", e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm"
+              placeholder="https://example.com/photo.jpg"
+            />
+            {form.photo && (
+              <div className="mt-2 flex items-center gap-3">
+                <img
+                  src={form.photo}
+                  alt="Preview"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-lebanon-green/40"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+                <span className="text-white/30 text-xs">Preview — will appear on ID card</span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="px-6 py-4 border-t border-white/5 flex gap-3">
           <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-sm font-medium transition-all">Cancel</button>
@@ -434,6 +546,432 @@ export function CancelModal({ studentName, programName, cancelling, onConfirm, o
             {cancelling ? "Cancelling..." : "Cancel Enrollment"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Admin Enroll Modal ────────────────────────────────────────────────────────
+
+export interface ProgramOption {
+  id: string; name: string; price: number; currency?: string;
+  coach?: { user?: { firstName: string; lastName: string } } | null;
+  locations?: { location?: { name: string } }[];
+}
+
+interface EnrollModalProps {
+  student: Student;
+  programs: ProgramOption[];
+  saving: boolean;
+  error: string | null;
+  onSave: (data: { programId: string; sessionsCount: number; isPaid: boolean; paymentMethod: string; amount: number }) => void;
+  onClose: () => void;
+}
+
+export function EnrollModal({ student, programs, saving, error, onSave, onClose }: EnrollModalProps) {
+  const [programId, setProgramId] = useState("");
+  const [sessionsCount, setSessionsCount] = useState(8);
+  const [isPaid, setIsPaid] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [amount, setAmount] = useState("");
+
+  const selectedProgram = programs.find((p) => p.id === programId);
+
+  function handleSave() {
+    if (!programId) return;
+    onSave({ programId, sessionsCount, isPaid, paymentMethod, amount: isPaid ? Number(amount) : 0 });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-dark-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+          <div>
+            <h2 className="text-lg font-bold text-white">🏅 Enroll Student</h2>
+            <p className="text-white/40 text-xs mt-0.5">{student.firstName} {student.lastName}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-all">✕</button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {error && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
+
+          {/* Program selector */}
+          <div>
+            <label className="block text-white/50 text-xs mb-1.5">Program / Sport *</label>
+            <select value={programId} onChange={(e) => { setProgramId(e.target.value); const p = programs.find(x => x.id === e.target.value); if (p) setAmount(String(p.price)); }} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm">
+              <option value="">Select program...</option>
+              {programs.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.price} {p.currency ?? "QAR"}</option>)}
+            </select>
+          </div>
+
+          {/* Program info */}
+          {selectedProgram && (
+            <div className="p-3 rounded-xl bg-white/3 border border-white/8 space-y-1.5">
+              {selectedProgram.coach?.user && (
+                <div className="flex items-center gap-2 text-xs text-white/60">
+                  <span>👨‍🏫</span>
+                  <span>Coach: <span className="text-white/80 font-medium">{selectedProgram.coach.user.firstName} {selectedProgram.coach.user.lastName}</span></span>
+                </div>
+              )}
+              {selectedProgram.locations?.[0]?.location && (
+                <div className="flex items-center gap-2 text-xs text-white/60">
+                  <span>📍</span>
+                  <span>Location: <span className="text-white/80 font-medium">{selectedProgram.locations[0].location.name}</span></span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sessions */}
+          <div>
+            <label className="block text-white/50 text-xs mb-1.5">Sessions to assign</label>
+            <div className="flex gap-2">
+              {[4, 8, 12, 16].map((n) => (
+                <button key={n} onClick={() => setSessionsCount(n)} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all border ${sessionsCount === n ? "bg-lebanon-green text-white border-lebanon-green" : "bg-white/5 text-white/50 border-white/10 hover:border-white/30"}`}>{n}</button>
+              ))}
+              <input type="number" min={1} max={50} value={sessionsCount} onChange={(e) => setSessionsCount(Number(e.target.value))} className="w-16 px-2 py-2 rounded-lg bg-dark-900 border border-white/10 text-white text-sm text-center focus:outline-none focus:border-lebanon-green/50" />
+            </div>
+          </div>
+
+          {/* Paid toggle */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-white/3 border border-white/8">
+            <div>
+              <div className="text-white text-sm font-medium">Mark as Paid</div>
+              <div className="text-white/40 text-xs">Record payment now</div>
+            </div>
+            <button onClick={() => setIsPaid((v) => !v)} className={`relative w-11 h-6 rounded-full transition-colors ${isPaid ? "bg-lebanon-green" : "bg-white/10"}`}>
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${isPaid ? "left-5.5" : "left-0.5"}`} style={{ left: isPaid ? "22px" : "2px" }} />
+            </button>
+          </div>
+
+          {/* Payment fields */}
+          {isPaid && (
+            <div className="space-y-3 p-3 rounded-xl bg-lebanon-green/5 border border-lebanon-green/15">
+              <div>
+                <label className="block text-white/50 text-xs mb-1.5">Payment Method</label>
+                <div className="flex gap-2">
+                  {[["CASH", "💵 Cash"], ["TRANSFER", "🏦 Transfer"], ["CARD", "💳 Card"]].map(([val, label]) => (
+                    <button key={val} onClick={() => setPaymentMethod(val)} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all border ${paymentMethod === val ? "bg-lebanon-green text-white border-lebanon-green" : "bg-white/5 text-white/50 border-white/10 hover:border-white/20"}`}>{label}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-white/50 text-xs mb-1.5">Amount (QAR)</label>
+                <input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="0" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-white/5 flex gap-3">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 text-sm font-medium transition-all">Cancel</button>
+          <button onClick={handleSave} disabled={saving || !programId} className="flex-1 px-4 py-2.5 rounded-xl bg-lebanon-green hover:bg-lebanon-green/90 text-white text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+            {saving && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+            {saving ? "Saving..." : isPaid ? "Enroll & Record Payment" : "Enroll"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Admin Renew Modal ─────────────────────────────────────────────────────────
+
+interface RenewModalProps {
+  student: Student;
+  programName: string;
+  saving: boolean;
+  error: string | null;
+  onSave: (data: { sessionsCount: number; paymentMethod: string; amount: number }) => void;
+  onClose: () => void;
+}
+
+export function RenewModal({ student, programName, saving, error, onSave, onClose }: RenewModalProps) {
+  const [sessionsCount, setSessionsCount] = useState(8);
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [amount, setAmount] = useState("");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-dark-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+          <div>
+            <h2 className="text-lg font-bold text-white">🔄 Renew Sessions</h2>
+            <p className="text-white/40 text-xs mt-0.5">{student.firstName} {student.lastName} · {programName}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-all">✕</button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {error && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
+
+          <div>
+            <label className="block text-white/50 text-xs mb-1.5">Sessions to add</label>
+            <div className="flex gap-2">
+              {[4, 8, 12, 16].map((n) => (
+                <button key={n} onClick={() => setSessionsCount(n)} className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all border ${sessionsCount === n ? "bg-lebanon-green text-white border-lebanon-green" : "bg-white/5 text-white/50 border-white/10 hover:border-white/30"}`}>{n}</button>
+              ))}
+              <input type="number" min={1} max={50} value={sessionsCount} onChange={(e) => setSessionsCount(Number(e.target.value))} className="w-16 px-2 py-2 rounded-lg bg-dark-900 border border-white/10 text-white text-sm text-center focus:outline-none focus:border-lebanon-green/50" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-white/50 text-xs mb-1.5">Payment Method</label>
+            <div className="flex gap-2">
+              {[["CASH", "💵 Cash"], ["TRANSFER", "🏦 Transfer"], ["CARD", "💳 Card"]].map(([val, label]) => (
+                <button key={val} onClick={() => setPaymentMethod(val)} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all border ${paymentMethod === val ? "bg-lebanon-green text-white border-lebanon-green" : "bg-white/5 text-white/50 border-white/10 hover:border-white/20"}`}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-white/50 text-xs mb-1.5">Amount (QAR)</label>
+            <input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="0" />
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-white/5 flex gap-3">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 text-sm font-medium transition-all">Cancel</button>
+          <button onClick={() => onSave({ sessionsCount, paymentMethod, amount: Number(amount) })} disabled={saving || !amount} className="flex-1 px-4 py-2.5 rounded-xl bg-lebanon-green hover:bg-lebanon-green/90 text-white text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+            {saving && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+            {saving ? "Saving..." : "Renew & Record Payment"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ID Card Modal ─────────────────────────────────────────────────────────────
+
+interface IDCardModalProps { student: Student; onClose: () => void; }
+
+const CARD_W = 420;
+const CARD_H = 265;
+
+const CARD_BG = "linear-gradient(145deg, #002610 0%, #00401a 40%, #006625 70%, #00A651 100%)";
+const CARD_RED = "#EE161F";
+const CARD_SHADOW = "0 2px 4px rgba(0,0,0,0.3), 0 8px 16px rgba(0,0,0,0.35), 0 20px 40px rgba(0,0,0,0.3), 0 40px 80px rgba(0,0,0,0.2)";
+
+function CardFrontFace({ student, tenant }: { student: Student; tenant: { name: string; logo: string; phone: string; email: string; whatsapp: string } }) {
+  const initials = `${student.firstName?.charAt(0) ?? ""}${student.lastName?.charAt(0) ?? ""}`.toUpperCase();
+  const academyName = tenant.name || "CEDARS SPORT ACADEMY";
+
+  return (
+    <div style={{ width: CARD_W, height: CARD_H, borderRadius: 16, background: CARD_BG, overflow: "hidden", position: "relative", fontFamily: "'Segoe UI', system-ui, sans-serif", boxShadow: CARD_SHADOW }}>
+
+      {/* Gloss overlay */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 45%, transparent 100%)", pointerEvents: "none", zIndex: 10 }} />
+
+      {/* Red diagonal accent top-right */}
+      <div style={{ position: "absolute", top: -30, right: -30, width: 110, height: 110, background: CARD_RED, transform: "rotate(45deg)", opacity: 0.85, zIndex: 1 }} />
+      {/* Thin red stripe bottom */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 5, background: `linear-gradient(90deg, ${CARD_RED}, ${CARD_RED}aa)`, zIndex: 2 }} />
+      {/* Decorative circle bottom-left */}
+      <div style={{ position: "absolute", bottom: -40, left: -40, width: 130, height: 130, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.07)", zIndex: 1 }} />
+      <div style={{ position: "absolute", bottom: -20, left: -20, width: 80, height: 80, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.05)", zIndex: 1 }} />
+
+      {/* Top-left logo + academy name */}
+      <div style={{ position: "absolute", top: 12, left: 16, display: "flex", alignItems: "center", gap: 7, zIndex: 5 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 7, background: "rgba(255,255,255,0.95)", display: "flex", alignItems: "center", justifyContent: "center", padding: 3, flexShrink: 0 }}>
+          {tenant.logo
+            ? <img src={tenant.logo} alt="logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            : <span style={{ fontWeight: 900, fontSize: 14, color: "#00A651" }}>{academyName.charAt(0)}</span>
+          }
+        </div>
+        <span style={{ color: "rgba(255,255,255,0.85)", fontWeight: 700, fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase" }}>{academyName}</span>
+      </div>
+
+      {/* STUDENT ID badge top-right (under red corner) */}
+      <div style={{ position: "absolute", top: 14, right: 18, zIndex: 6 }}>
+        <span style={{ color: "white", fontSize: 8, fontWeight: 800, letterSpacing: "0.16em", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 20, padding: "3px 9px" }}>STUDENT ID</span>
+      </div>
+
+      {/* Photo */}
+      <div style={{ position: "absolute", left: 20, top: 54, zIndex: 5 }}>
+        {student.photo
+          ? <img src={student.photo} alt={student.firstName} style={{ width: 88, height: 88, borderRadius: "50%", objectFit: "cover", border: "3px solid rgba(255,255,255,0.35)", boxShadow: "0 0 0 2px #00A651, 0 4px 16px rgba(0,0,0,0.5)" }} />
+          : <div style={{ width: 88, height: 88, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))", border: "3px solid rgba(255,255,255,0.25)", boxShadow: "0 0 0 2px #00A651, 0 4px 16px rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "rgba(255,255,255,0.9)" }}>{initials}</div>
+        }
+      </div>
+
+      {/* Info block */}
+      <div style={{ position: "absolute", left: 124, top: 52, right: 16, zIndex: 5 }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: "white", lineHeight: 1.15, textShadow: "0 1px 4px rgba(0,0,0,0.5)", marginBottom: 5 }}>{student.firstName} {student.lastName}</div>
+
+        {student.studentCode && (
+          <div style={{ display: "inline-flex", alignItems: "center", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 20, padding: "3px 11px", marginBottom: 7 }}>
+            <span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 12, color: "rgba(255,255,255,0.95)", letterSpacing: "0.05em" }}>{student.studentCode}</span>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 6 }}>
+          {student.bloodType && (
+            <span style={{ background: "rgba(238,22,31,0.25)", border: "1px solid rgba(238,22,31,0.5)", borderRadius: 20, padding: "2px 9px", fontSize: 10, fontWeight: 700, color: "rgba(255,160,165,1)" }}>{student.bloodType}</span>
+          )}
+          {student.nationality && (
+            <span style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 20, padding: "2px 9px", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{student.nationality}</span>
+          )}
+        </div>
+
+        {student.medicalCardNumber && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Medical Card</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", fontFamily: "monospace" }}>{student.medicalCardNumber}</span>
+          </div>
+        )}
+        {student.dateOfBirth && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 4 }}>
+            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.08em" }}>DOB</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{new Date(student.dateOfBirth).toLocaleDateString("en-GB")}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CardBackFace({ tenant }: { tenant: { name: string; logo: string; phone: string; email: string; whatsapp: string } }) {
+  const academyName = tenant.name || "CEDARS SPORT ACADEMY";
+
+  return (
+    <div style={{ width: CARD_W, height: CARD_H, borderRadius: 16, background: CARD_BG, overflow: "hidden", position: "relative", fontFamily: "'Segoe UI', system-ui, sans-serif", boxShadow: CARD_SHADOW }}>
+
+      {/* Gloss overlay */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 45%, transparent 100%)", pointerEvents: "none", zIndex: 10 }} />
+
+      {/* Red diagonal accent bottom-left */}
+      <div style={{ position: "absolute", bottom: -30, left: -30, width: 110, height: 110, background: CARD_RED, transform: "rotate(45deg)", opacity: 0.8, zIndex: 1 }} />
+      {/* Red stripe top */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 5, background: `linear-gradient(90deg, ${CARD_RED}aa, ${CARD_RED})`, zIndex: 2 }} />
+      {/* Decorative circles top-right */}
+      <div style={{ position: "absolute", top: -50, right: -50, width: 150, height: 150, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.06)", zIndex: 1 }} />
+      <div style={{ position: "absolute", top: -25, right: -25, width: 90, height: 90, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.04)", zIndex: 1 }} />
+
+      {/* Large centered logo */}
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, zIndex: 5, padding: "18px 40px 14px" }}>
+        <div style={{ width: 80, height: 80, borderRadius: 18, background: "rgba(255,255,255,0.95)", display: "flex", alignItems: "center", justifyContent: "center", padding: 8, marginBottom: 4, boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}>
+          {tenant.logo
+            ? <img src={tenant.logo} alt="logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            : <span style={{ fontWeight: 900, fontSize: 32, color: "#00A651" }}>{academyName.charAt(0)}</span>
+          }
+        </div>
+
+        <p style={{ fontSize: 10, color: "rgba(255,255,255,0.55)", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", margin: 0 }}>If found, please contact the academy</p>
+
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, width: "100%" }}>
+          {tenant.phone && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 13 }}>📞</span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: "white", letterSpacing: "0.03em", textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>{tenant.phone}</span>
+            </div>
+          )}
+          {tenant.whatsapp && tenant.whatsapp !== tenant.phone && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12 }}>💬</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>{tenant.whatsapp}</span>
+            </div>
+          )}
+          {tenant.email && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12 }}>✉️</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{tenant.email}</span>
+            </div>
+          )}
+        </div>
+
+        <div style={{ width: "60%", height: 1, background: "rgba(255,255,255,0.12)", margin: "2px 0" }} />
+
+        <p style={{ fontSize: 8.5, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, textAlign: "center", margin: 0 }}>
+          This card is the property of {academyName}.<br />Unauthorized use is prohibited.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function IDCardModal({ student, onClose }: IDCardModalProps) {
+  const { tenant } = useTenant();
+  const [flipped, setFlipped] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <style>{`
+        .id-card-scene { perspective: 1200px; }
+        .id-card-flipper {
+          width: ${CARD_W}px; height: ${CARD_H}px;
+          position: relative;
+          transform-style: preserve-3d;
+          transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .id-card-flipper.is-flipped { transform: rotateY(180deg); }
+        .id-card-face {
+          position: absolute; inset: 0;
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+          border-radius: 14px;
+          box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+        }
+        .id-card-face-back { transform: rotateY(180deg); }
+        @media print {
+          body > * { display: none !important; }
+          .id-card-print-area {
+            display: flex !important;
+            position: fixed !important;
+            top: 10mm; left: 10mm; gap: 14mm;
+          }
+          .id-card-print-area > div { box-shadow: none !important; border: 1px solid #e5e7eb !important; border-radius: 10px; overflow: hidden; }
+        }
+      `}</style>
+
+      <div className="relative flex flex-col items-center gap-6">
+        {/* Header */}
+        <div className="flex items-center justify-between w-full" style={{ maxWidth: CARD_W }}>
+          <div>
+            <h2 className="text-xl font-bold text-white">🪪 Student ID Card</h2>
+            <p className="text-white/40 text-sm mt-0.5">{student.firstName} {student.lastName} · {student.studentCode || "No ID"}</p>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-all text-lg">✕</button>
+        </div>
+
+        {/* Flip card */}
+        <div className="id-card-scene cursor-pointer" onClick={() => setFlipped(f => !f)} title="Click to flip">
+          <div className={`id-card-flipper${flipped ? " is-flipped" : ""}`}>
+            <div className="id-card-face id-card-face-front">
+              <CardFrontFace student={student} tenant={tenant} />
+            </div>
+            <div className="id-card-face id-card-face-back">
+              <CardBackFace tenant={tenant} />
+            </div>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setFlipped(f => !f)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-all"
+          >
+            🔄 {flipped ? "Show Front" : "Show Back"}
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-lebanon-green hover:bg-lebanon-green/90 text-white text-sm font-semibold transition-all"
+          >
+            🖨️ Print Both Sides
+          </button>
+        </div>
+
+        <p className="text-white/25 text-xs">Click the card or the button to flip · Print outputs both sides</p>
+      </div>
+
+      {/* Hidden print layout — both sides side by side */}
+      <div className="id-card-print-area" style={{ display: "none" }}>
+        <div><CardFrontFace student={student} tenant={tenant} /></div>
+        <div><CardBackFace tenant={tenant} /></div>
       </div>
     </div>
   );

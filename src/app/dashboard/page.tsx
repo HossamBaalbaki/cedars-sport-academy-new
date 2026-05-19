@@ -12,14 +12,26 @@ import {
   OverviewTab, ScheduleTab, AttendanceTab, PaymentTab,
   type Enrollment, type AttendanceRecord,
 } from "./DashboardTabs";
+import { IDCardModal, type Student } from "../dashboard/admin/students/StudentModals";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type NotifType = "ANNOUNCEMENT" | "INFO" | "SUCCESS";
+
+const NOTIF_TYPE_CONFIG: Record<NotifType, { icon: string; color: string; bg: string; border: string; label: string }> = {
+  ANNOUNCEMENT: { icon: "📢", label: "Announcement", color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/30" },
+  INFO:         { icon: "ℹ️", label: "Info",         color: "text-blue-400",   bg: "bg-blue-500/15",   border: "border-blue-500/30" },
+  SUCCESS:      { icon: "✅", label: "Success",       color: "text-emerald-400",bg: "bg-emerald-500/15",border: "border-emerald-500/30" },
+};
 
 interface ParentNotification {
   id: string;
   title: string;
   message: string;
+  type?: string;
+  imageUrl?: string | null;
   isRead: boolean;
+  popupDismissed?: boolean;
   createdAt: string;
   source?: "server" | "local";
   severity?: "red" | "yellow" | "normal";
@@ -35,6 +47,9 @@ interface Child {
   medicalNotes?: string;
   school?: string;
   medicalCardNumber?: string;
+  studentCode?: string | null;
+  photo?: string | null;
+  createdAt?: string;
   enrollments: Enrollment[];
   attendance: AttendanceRecord[];
 }
@@ -82,6 +97,10 @@ export default function ParentDashboard() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef<HTMLDivElement | null>(null);
+
+  // One-time popup
+  const [popupNotif, setPopupNotif] = useState<ParentNotification | null>(null);
+  const [dismissingPopup, setDismissingPopup] = useState(false);
 
   const buildLocalPaymentAlerts = useCallback((): ParentNotification[] => {
     const alerts: ParentNotification[] = [];
@@ -150,6 +169,9 @@ export default function ParentDashboard() {
   // Unenroll state
   const [unenrollTarget, setUnenrollTarget] = useState<{ childId: string; enrollmentId: string; programName: string } | null>(null);
   const [unenrollLoading, setUnenrollLoading] = useState(false);
+
+  // ID Card state
+  const [idCardChild, setIdCardChild] = useState<Child | null>(null);
 
   // Auth redirect
   useEffect(() => {
@@ -220,6 +242,13 @@ export default function ParentDashboard() {
       setNotifications(merged);
       const serverUnread = (unreadRes.data as { count?: number })?.count ?? 0;
       setUnreadCount(serverUnread + localAlerts.length);
+
+      // Show one-time popup for the first broadcast notification not yet dismissed
+      const broadcastTypes = new Set(["ANNOUNCEMENT", "INFO", "SUCCESS"]);
+      const undismissed = serverNotifications.find(
+        (n) => broadcastTypes.has(n.type ?? "") && !n.popupDismissed
+      );
+      if (undismissed) setPopupNotif(undismissed);
     } catch {
       // keep dashboard resilient if notifications fail
       const localAlerts = buildLocalPaymentAlerts();
@@ -374,6 +403,22 @@ export default function ParentDashboard() {
     }
   }
 
+  async function handleDismissPopup() {
+    if (!popupNotif || dismissingPopup) return;
+    setDismissingPopup(true);
+    try {
+      await notificationsApi.dismissPopup(popupNotif.id);
+      setNotifications((prev) =>
+        prev.map((n) => n.id === popupNotif.id ? { ...n, popupDismissed: true, isRead: true } : n)
+      );
+    } catch {
+      // still close the popup even if the API call fails
+    } finally {
+      setPopupNotif(null);
+      setDismissingPopup(false);
+    }
+  }
+
   // ── Guards ────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -387,6 +432,51 @@ export default function ParentDashboard() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-dark-900 pt-20">
+
+      {/* One-time popup */}
+      {popupNotif && (() => {
+        const cfg = NOTIF_TYPE_CONFIG[popupNotif.type as NotifType];
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="bg-dark-800 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+              {/* Image */}
+              {popupNotif.imageUrl && (
+                <div className="w-full max-h-56 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={popupNotif.imageUrl}
+                    alt=""
+                    className="w-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                </div>
+              )}
+              <div className="p-6">
+                {/* Type badge */}
+                {cfg && (
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border mb-3 ${cfg.bg} ${cfg.border} ${cfg.color}`}>
+                    {cfg.icon} {cfg.label}
+                  </span>
+                )}
+                <h2 className="text-white font-bold text-lg mb-2">{popupNotif.title}</h2>
+                <p className="text-white/60 text-sm leading-relaxed whitespace-pre-line">{popupNotif.message}</p>
+                <div className="flex gap-3 mt-5">
+                  <button
+                    onClick={handleDismissPopup}
+                    disabled={dismissingPopup}
+                    className="flex-1 py-2.5 rounded-xl bg-lebanon-green text-white text-sm font-semibold hover:bg-lebanon-green/80 disabled:opacity-50 transition-all"
+                  >
+                    {dismissingPopup ? "…" : "Got it"}
+                  </button>
+                </div>
+                <p className="text-white/25 text-xs text-center mt-3">
+                  You can find this in your notifications bell anytime
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Header */}
       <div className="bg-gradient-to-r from-dark-800 to-dark-900 border-b border-white/5">
@@ -441,16 +531,27 @@ export default function ParentDashboard() {
                           }`}
                         >
                           <div className="flex items-start gap-3">
-                            <div className={`w-2 h-2 mt-2 rounded-full ${n.isRead ? "bg-white/20" : "bg-lebanon-green"}`} />
+                            <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${n.isRead ? "bg-white/20" : "bg-lebanon-green"}`} />
                             <div className="flex-1 min-w-0">
+                              {n.type && NOTIF_TYPE_CONFIG[n.type as NotifType] && (
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border mb-1 ${NOTIF_TYPE_CONFIG[n.type as NotifType].bg} ${NOTIF_TYPE_CONFIG[n.type as NotifType].border} ${NOTIF_TYPE_CONFIG[n.type as NotifType].color}`}>
+                                  {NOTIF_TYPE_CONFIG[n.type as NotifType].icon} {NOTIF_TYPE_CONFIG[n.type as NotifType].label}
+                                </span>
+                              )}
                               <p className="text-white text-sm font-semibold truncate">{n.title}</p>
-                              <p className="text-white/70 text-xs mt-0.5 break-words whitespace-pre-line">{n.message}</p>
+                              <p className="text-white/70 text-xs mt-0.5 break-words whitespace-pre-line line-clamp-2">{n.message}</p>
+                              {n.imageUrl && (
+                                <div className="mt-1.5 rounded-lg overflow-hidden border border-white/10 max-h-20">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={n.imageUrl} alt="" className="w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                </div>
+                              )}
                               <p className="text-white/30 text-[11px] mt-1">{new Date(n.createdAt).toLocaleString()}</p>
                             </div>
                             {!n.isRead && n.source === "server" && (
                               <button
                                 onClick={() => markNotificationRead(n.id)}
-                                className="text-[11px] text-lebanon-green hover:underline whitespace-nowrap"
+                                className="text-[11px] text-lebanon-green hover:underline whitespace-nowrap flex-shrink-0"
                               >
                                 Mark read
                               </button>
@@ -598,9 +699,10 @@ export default function ParentDashboard() {
                     className={`w-full text-left glass-card p-4 transition-all border ${isSel ? "border-lebanon-green/50 bg-lebanon-green/5" : "border-white/5 hover:border-white/20"}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lebanon-green/40 to-blue-500/40 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                        {child.firstName[0]}{child.lastName[0]}
-                      </div>
+                      {child.photo
+                        ? <img src={child.photo} alt={child.firstName} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-white/10" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        : <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lebanon-green/40 to-blue-500/40 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">{child.firstName[0]}{child.lastName[0]}</div>
+                      }
                       <div className="min-w-0">
                         <div className="text-white font-semibold text-sm truncate">{child.firstName} {child.lastName}</div>
                         <div className="text-white/40 text-xs">Age {calcAge(child.dateOfBirth)} · {active} program{active !== 1 ? "s" : ""}</div>
@@ -633,9 +735,10 @@ export default function ParentDashboard() {
                 {/* Child Header */}
                 <div className="glass-card p-5 flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-lebanon-green/40 to-blue-500/40 flex items-center justify-center text-white font-black text-xl flex-shrink-0">
-                      {sel.firstName[0]}{sel.lastName[0]}
-                    </div>
+                    {sel.photo
+                      ? <img src={sel.photo} alt={sel.firstName} className="w-14 h-14 rounded-2xl object-cover flex-shrink-0 border border-white/10" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      : <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-lebanon-green/40 to-blue-500/40 flex items-center justify-center text-white font-black text-xl flex-shrink-0">{sel.firstName[0]}{sel.lastName[0]}</div>
+                    }
                     <div>
                       <h2 className="text-xl font-black text-white">{sel.firstName} {sel.lastName}</h2>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -648,6 +751,7 @@ export default function ParentDashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => openEnroll(sel.id)} className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-semibold hover:bg-blue-500/30 transition-all">+ Enroll</button>
+                    <button onClick={() => setIdCardChild(sel)} className="px-3 py-1.5 rounded-lg bg-lebanon-green/10 text-lebanon-green border border-lebanon-green/20 text-xs font-semibold hover:bg-lebanon-green/20 transition-all">🪪 ID Card</button>
                     <button onClick={() => openEdit(sel)} className="px-3 py-1.5 rounded-lg bg-white/5 text-white/60 border border-white/10 text-xs font-semibold hover:text-white hover:border-white/30 transition-all">✏️ Edit</button>
                   </div>
                 </div>
@@ -747,6 +851,12 @@ export default function ParentDashboard() {
           loading={unenrollLoading}
           onConfirm={doUnenroll}
           onClose={() => setUnenrollTarget(null)}
+        />
+      )}
+      {idCardChild && (
+        <IDCardModal
+          student={idCardChild as unknown as Student}
+          onClose={() => setIdCardChild(null)}
         />
       )}
 

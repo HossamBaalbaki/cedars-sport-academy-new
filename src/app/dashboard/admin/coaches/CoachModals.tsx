@@ -7,7 +7,7 @@ interface Coach {
   id: string; userId: string; bio?: string; experience?: number;
   certifications?: string[]; instagram?: string; twitter?: string;
   linkedin?: string; featured: boolean; isActive: boolean;
-  user: { id: string; firstName: string; lastName: string; email: string; avatar?: string; isActive: boolean };
+  user: { id: string; firstName: string; lastName: string; email: string; phone?: string; avatar?: string; isActive: boolean };
   createdAt: string;
 }
 
@@ -122,6 +122,11 @@ export function CreateCoachModal(p: CreateModalProps) {
 
 interface EditModalProps {
   coach: Coach | null; saving: boolean; err: string | null;
+  // User fields
+  eFN: string; eLN: string; eEmail: string; ePhone: string; eActive: boolean; ePwd: string;
+  setEFN: (v: string) => void; setELN: (v: string) => void; setEEmail: (v: string) => void;
+  setEPhone: (v: string) => void; setEActive: (v: boolean) => void; setEPwd: (v: string) => void;
+  // Coach profile fields
   bio: string; exp: string; certs: string; ig: string; tw: string; li: string; feat: boolean; photo: string;
   setBio: (v: string) => void; setExp: (v: string) => void; setCerts: (v: string) => void;
   setIG: (v: string) => void; setTW: (v: string) => void; setLI: (v: string) => void;
@@ -139,49 +144,71 @@ export function EditCoachModal(p: EditModalProps) {
           <h2 className="text-lg font-bold text-white">Edit — {p.coach.user?.firstName} {p.coach.user?.lastName}</h2>
           <button onClick={p.onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 flex items-center justify-center">✕</button>
         </div>
-        <div className="px-6 py-5 space-y-4 max-h-[65vh] overflow-y-auto">
+        <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
           {p.err && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{p.err}</div>}
 
-          {/* Photo URL with live preview */}
+          {/* ── Account Info ── */}
           <div>
-            <label className={labelCls}>Photo URL</label>
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-dark-900 border border-white/10 flex-shrink-0 flex items-center justify-center">
-                {p.photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.photo} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                ) : (
-                  <span className="text-white/20 text-xl">👤</span>
-                )}
+            <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-3">Account Info</p>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={labelCls}>First Name <span className="text-red-400">*</span></label><input type="text" value={p.eFN} onChange={e => p.setEFN(e.target.value)} placeholder="First name" className={inputCls} /></div>
+                <div><label className={labelCls}>Last Name <span className="text-red-400">*</span></label><input type="text" value={p.eLN} onChange={e => p.setELN(e.target.value)} placeholder="Last name" className={inputCls} /></div>
               </div>
-              <input
-                type="url"
-                value={p.photo}
-                onChange={e => p.setPhoto(e.target.value)}
-                placeholder="https://example.com/photo.jpg"
-                className={`${inputCls} flex-1`}
-              />
+              <div><label className={labelCls}>Email <span className="text-red-400">*</span></label><input type="email" value={p.eEmail} onChange={e => p.setEEmail(e.target.value)} placeholder="email@example.com" className={inputCls} /></div>
+              <div><label className={labelCls}>Phone</label><input type="text" value={p.ePhone} onChange={e => p.setEPhone(e.target.value)} placeholder="+974 00 000 000" className={inputCls} /></div>
+              <div>
+                <label className={labelCls}>New Password <span className="text-white/30">(leave blank to keep current)</span></label>
+                <input type="password" value={p.ePwd} onChange={e => p.setEPwd(e.target.value)} placeholder="Min 8 characters" className={inputCls} />
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/3 border border-white/5">
+                <span className="text-white/60 text-sm">Account Active</span>
+                <button type="button" onClick={() => p.setEActive(!p.eActive)} className={`w-10 h-6 rounded-full relative transition-colors ${p.eActive ? "bg-lebanon-green" : "bg-white/10"}`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${p.eActive ? "translate-x-5" : "translate-x-1"}`} />
+                </button>
+              </div>
             </div>
           </div>
 
-          <div><label className={labelCls}>Bio</label><textarea value={p.bio} onChange={e => p.setBio(e.target.value)} placeholder="Coach biography..." rows={3} className={`${inputCls} resize-none`} /></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className={labelCls}>Experience (years)</label><input type="number" min="0" value={p.exp} onChange={e => p.setExp(e.target.value)} placeholder="5" className={inputCls} /></div>
-            <div>
-              <label className={labelCls}>Featured Coach</label>
-              <div className="flex items-center h-[42px] gap-2">
-                <button type="button" onClick={() => p.setFeat(!p.feat)} className={`w-10 h-6 rounded-full relative transition-colors ${p.feat ? "bg-lebanon-green" : "bg-white/10"}`}>
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${p.feat ? "translate-x-5" : "translate-x-1"}`} />
-                </button>
-                <span className="text-white/60 text-sm">{p.feat ? "Yes" : "No"}</span>
+          {/* ── Coach Profile ── */}
+          <div>
+            <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-3">Coach Profile</p>
+            <div className="space-y-3">
+              {/* Photo URL with live preview */}
+              <div>
+                <label className={labelCls}>Photo URL</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-dark-900 border border-white/10 flex-shrink-0 flex items-center justify-center">
+                    {p.photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.photo} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    ) : (
+                      <span className="text-white/20 text-xl">👤</span>
+                    )}
+                  </div>
+                  <input type="url" value={p.photo} onChange={e => p.setPhoto(e.target.value)} placeholder="https://example.com/photo.jpg" className={`${inputCls} flex-1`} />
+                </div>
+              </div>
+              <div><label className={labelCls}>Bio</label><textarea value={p.bio} onChange={e => p.setBio(e.target.value)} placeholder="Coach biography..." rows={3} className={`${inputCls} resize-none`} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Experience (years)</label><input type="number" min="0" value={p.exp} onChange={e => p.setExp(e.target.value)} placeholder="5" className={inputCls} /></div>
+                <div>
+                  <label className={labelCls}>Featured Coach</label>
+                  <div className="flex items-center h-[42px] gap-2">
+                    <button type="button" onClick={() => p.setFeat(!p.feat)} className={`w-10 h-6 rounded-full relative transition-colors ${p.feat ? "bg-lebanon-green" : "bg-white/10"}`}>
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${p.feat ? "translate-x-5" : "translate-x-1"}`} />
+                    </button>
+                    <span className="text-white/60 text-sm">{p.feat ? "Yes" : "No"}</span>
+                  </div>
+                </div>
+              </div>
+              <div><label className={labelCls}>Certifications <span className="text-white/30">(comma-separated)</span></label><input type="text" value={p.certs} onChange={e => p.setCerts(e.target.value)} placeholder="UEFA B, FIFA Coaching" className={inputCls} /></div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><label className={labelCls}>Instagram</label><input type="text" value={p.ig} onChange={e => p.setIG(e.target.value)} placeholder="@handle" className={inputCls} /></div>
+                <div><label className={labelCls}>Twitter / X</label><input type="text" value={p.tw} onChange={e => p.setTW(e.target.value)} placeholder="@handle" className={inputCls} /></div>
+                <div><label className={labelCls}>LinkedIn</label><input type="text" value={p.li} onChange={e => p.setLI(e.target.value)} placeholder="URL" className={inputCls} /></div>
               </div>
             </div>
-          </div>
-          <div><label className={labelCls}>Certifications <span className="text-white/30">(comma-separated)</span></label><input type="text" value={p.certs} onChange={e => p.setCerts(e.target.value)} placeholder="UEFA B, FIFA Coaching" className={inputCls} /></div>
-          <div className="grid grid-cols-3 gap-3">
-            <div><label className={labelCls}>Instagram</label><input type="text" value={p.ig} onChange={e => p.setIG(e.target.value)} placeholder="@handle" className={inputCls} /></div>
-            <div><label className={labelCls}>Twitter / X</label><input type="text" value={p.tw} onChange={e => p.setTW(e.target.value)} placeholder="@handle" className={inputCls} /></div>
-            <div><label className={labelCls}>LinkedIn</label><input type="text" value={p.li} onChange={e => p.setLI(e.target.value)} placeholder="URL" className={inputCls} /></div>
           </div>
         </div>
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/5">

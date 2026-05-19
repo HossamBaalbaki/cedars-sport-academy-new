@@ -327,6 +327,37 @@ export const studentsApi = {
       method: "PATCH",
       body: JSON.stringify({ note }),
     }),
+
+  /** Admin: toggle student isActive */
+  toggleActive: (id: string) =>
+    apiClient<unknown>(`/students/${id}/toggle-active`, { method: "PATCH" }),
+
+  /** Admin: enroll student in program + optional payment */
+  adminEnroll: (
+    studentId: string,
+    data: { programId: string; sessionsCount: number; isPaid: boolean; paymentMethod?: string; amount?: number },
+  ) =>
+    apiClient<unknown>(`/students/${studentId}/admin-enroll`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  /** Admin: renew sessions + record payment */
+  adminRenew: (
+    studentId: string,
+    enrollmentId: string,
+    data: { sessionsCount: number; paymentMethod: string; amount: number },
+  ) =>
+    apiClient<unknown>(`/students/${studentId}/enrollments/${enrollmentId}/renew`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  /** Admin: toggle enrollment active/inactive */
+  toggleEnrollment: (studentId: string, enrollmentId: string) =>
+    apiClient<unknown>(`/students/${studentId}/enrollments/${enrollmentId}/toggle`, {
+      method: "PATCH",
+    }),
 };
 
 // ─── Admin Locations API ──────────────────────────────────────────────────────
@@ -351,7 +382,7 @@ export const achievementsApi = {
 
 export const coachSessionsApi = {
   /** COACH: start a new class session */
-  startSession: (dto: { scheduleId: string; date: string; notes?: string; className: string }) =>
+  startSession: (dto: { scheduleId: string; date: string; notes?: string; className?: string }) =>
     apiClient<unknown>("/coach-sessions", { method: "POST", body: JSON.stringify(dto) }),
 
   /** COACH: list my sessions (most recent first, excludes completed) */
@@ -390,6 +421,29 @@ export const coachSessionsApi = {
     }),
 };
 
+// ─── Admin Coach Management API ──────────────────────────────────────────────
+
+export const adminCoachApi = {
+  getSessions: (coachUserId: string) =>
+    apiClient<unknown[]>(`/coach-sessions/admin/coach/${coachUserId}/sessions`),
+  getStudents: (coachUserId: string) =>
+    apiClient<unknown[]>(`/coach-sessions/admin/coach/${coachUserId}/students`),
+  getSchedules: (coachUserId: string) =>
+    apiClient<unknown[]>(`/coach-sessions/admin/coach/${coachUserId}/schedules`),
+  startSession: (coachUserId: string, dto: { scheduleId: string; date: string; notes?: string; className?: string }) =>
+    apiClient<unknown>(`/coach-sessions/admin/coach/${coachUserId}/sessions`, {
+      method: 'POST', body: JSON.stringify(dto),
+    }),
+  getRoster: (sessionId: string) =>
+    apiClient<unknown>(`/coach-sessions/admin/session/${sessionId}/roster`),
+  submitAttendance: (sessionId: string, records: Array<{ studentId: string; status: string; performanceRating?: number; notes?: string; isInjured?: boolean; injuryNote?: string }>) =>
+    apiClient<unknown>(`/coach-sessions/admin/session/${sessionId}/attendance`, {
+      method: 'POST', body: JSON.stringify({ records }),
+    }),
+  completeSession: (sessionId: string) =>
+    apiClient<unknown>(`/coach-sessions/admin/session/${sessionId}/complete`, { method: 'PATCH' }),
+};
+
 // ─── Tenant Config API ────────────────────────────────────────────────────────
 
 export const tenantApi = {
@@ -413,6 +467,21 @@ export const notificationsApi = {
     apiClient<unknown>(`/notifications/${id}/read`, { method: "PATCH" }),
   markAllRead: () =>
     apiClient<unknown>("/notifications/mark-all-read", { method: "PATCH" }),
+  getSent: () => apiClient<unknown[]>("/notifications/sent"),
+  dismissPopup: (id: string) =>
+    apiClient<unknown>(`/notifications/${id}/dismiss-popup`, { method: "PATCH" }),
+  broadcast: (dto: {
+    type: "ANNOUNCEMENT" | "INFO" | "SUCCESS";
+    title: string;
+    message: string;
+    imageUrl?: string;
+    recipientType: "ALL" | "SELECTED";
+    parentIds?: string[];
+  }) =>
+    apiClient<{ created: number }>("/notifications/broadcast", {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
 };
 
 // ─── Payments API ─────────────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ export interface MyStudent {
   id: string;
   firstName: string;
   lastName: string;
+  photo?: string | null;
   programs: string[];
   totalSessions: number;
   attended: number;
@@ -299,7 +300,6 @@ export function StartSessionModal({ scheds, initialScheduleId, onClose, onSucces
 
   async function doStart() {
     if (!selSched) { setErr("Select a schedule."); return; }
-    if (!selClassName.trim()) { setErr("Class name is required."); return; }
     setBusy(true);
     setErr("");
     try {
@@ -351,7 +351,7 @@ export function StartSessionModal({ scheds, initialScheduleId, onClose, onSucces
           </div>
           <div>
             <label className="block text-white/60 text-xs font-medium mb-1.5">
-              Class Name <span className="text-red-400">*</span>
+              Topic / Focus <span className="text-white/25">(optional)</span>
             </label>
             <input
               type="text"
@@ -408,6 +408,7 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
   const [subBusy, setSubBusy] = useState(false);
   const [subOk, setSubOk] = useState(false);
   const [subErr, setSubErr] = useState("");
+  const [markAllWarning, setMarkAllWarning] = useState<string | null>(null);
 
   // Load roster on mount
   useEffect(() => {
@@ -446,13 +447,17 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
   }
 
   function markAll(s: Status) {
+    const skipped = roster.filter((stu) => stu.paymentStatus === 'pending' || stu.isExpired).length;
+    if (skipped > 0) {
+      setMarkAllWarning(`${skipped} student${skipped > 1 ? "s" : ""} skipped — pending payment or no sessions remaining.`);
+    } else {
+      setMarkAllWarning(null);
+    }
     setAttMap((p) => {
       const n = { ...p };
-      // Only mark students whose payment is not pending
-      const paidStudentIds = new Set(roster.filter((stu) => stu.paymentStatus !== 'pending').map((stu) => stu.id));
-      for (const id of Object.keys(n)) {
-        if (paidStudentIds.has(id)) {
-          n[id] = { ...n[id], status: s };
+      for (const stu of roster) {
+        if (stu.paymentStatus !== 'pending' && !stu.isExpired) {
+          n[stu.id] = { ...n[stu.id], studentId: stu.id, status: s };
         }
       }
       return n;
@@ -487,7 +492,14 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
                   : session.schedule.program.name
                 : "Session"}
             </h3>
-            <p className="text-white/40 text-xs mt-0.5">{fmtD(session.date)}</p>
+            <div className="flex items-center gap-3 mt-0.5">
+              <p className="text-white/40 text-xs">{fmtD(session.date)}</p>
+              {!rosterBusy && roster.length > 0 && (
+                <span className="text-xs text-white/30">
+                  {Object.values(attMap).filter((r) => r.status).length} of {roster.length} marked
+                </span>
+              )}
+            </div>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">✕</button>
         </div>
@@ -506,21 +518,29 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 pb-3 border-b border-white/5 flex-wrap">
-                <span className="text-white/40 text-xs">Mark all:</span>
-                {STATUS_OPTS.map((opt) => (
-                  <button
-                    key={opt.val}
-                    onClick={() => !isCompletedSession && markAll(opt.val)}
-                    disabled={isCompletedSession}
-                    className={
-                      "px-2.5 py-1 rounded-lg text-xs font-medium " +
-                      (isCompletedSession ? "bg-white/5 text-white/20 cursor-not-allowed" : opt.cls)
-                    }
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              <div className="pb-3 border-b border-white/5 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-white/40 text-xs">Mark all:</span>
+                  {STATUS_OPTS.map((opt) => (
+                    <button
+                      key={opt.val}
+                      onClick={() => !isCompletedSession && markAll(opt.val)}
+                      disabled={isCompletedSession}
+                      className={
+                        "px-2.5 py-1 rounded-lg text-xs font-medium " +
+                        (isCompletedSession ? "bg-white/5 text-white/20 cursor-not-allowed" : opt.cls)
+                      }
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {markAllWarning && (
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <span className="text-amber-400 text-xs">⚠️ {markAllWarning}</span>
+                    <button onClick={() => setMarkAllWarning(null)} className="text-amber-400/50 hover:text-amber-400 text-sm leading-none">✕</button>
+                  </div>
+                )}
               </div>
 
               {roster.map((stu) => {
@@ -619,60 +639,62 @@ export function AttendanceModal({ session, onClose, onSuccess }: AttModalProps) 
                       </div>
                     )}
 
-                    {/* Rating + injury — hidden for expired or pending */}
+                    {/* Rating + note + injury — hidden for blocked students */}
                     {!isBlocked && (
                       <>
-                        <div className="flex items-center gap-3">
-                          <span className="text-white/40 text-xs w-20">Rating (1-5)</span>
-                          <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5].map((n) => (
-                              <button
-                                key={n}
-                                onClick={() => setF(stu.id, "performanceRating", rec.performanceRating === n ? undefined : n)}
-                                className={"w-7 h-7 rounded-lg text-xs font-bold transition-all " + (rec.performanceRating === n ? "bg-yellow-500 text-dark-900" : "bg-white/5 text-white/40 hover:bg-white/10")}
-                              >
-                                {n}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                        {/* Session note — visible first, not buried */}
+                        <textarea
+                          value={rec.notes ?? ""}
+                          onChange={(e) => setF(stu.id, "notes", e.target.value)}
+                          rows={2}
+                          placeholder="📝 Session note (visible to parent)…"
+                          disabled={isCompletedSession}
+                          className="w-full bg-dark-700 border border-white/8 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder-white/25 focus:outline-none focus:border-white/25 resize-none disabled:opacity-40"
+                        />
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          {/* Star rating */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-white/35 text-xs">Rating:</span>
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map((n) => (
+                                <button
+                                  key={n}
+                                  onClick={() => setF(stu.id, "performanceRating", rec.performanceRating === n ? undefined : n)}
+                                  disabled={isCompletedSession}
+                                  className={`text-lg leading-none transition-all disabled:opacity-40 ${
+                                    rec.performanceRating != null && n <= rec.performanceRating
+                                      ? "text-yellow-400"
+                                      : "text-white/15 hover:text-yellow-400/50"
+                                  }`}
+                                >★</button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Injury toggle */}
                           <label className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={!!rec.isInjured}
                               onChange={(e) => setF(stu.id, "isInjured", e.target.checked)}
                               disabled={isCompletedSession}
-                              className="w-4 h-4 rounded accent-red-500 disabled:opacity-40"
+                              className="w-3.5 h-3.5 rounded accent-red-500 disabled:opacity-40"
                             />
-                            <span className="text-white/50 text-xs">Injured</span>
+                            <span className="text-white/40 text-xs">🩹 Injured</span>
                           </label>
-                          {rec.isInjured && (
-                            <input
-                              value={rec.injuryNote ?? ""}
-                              onChange={(e) => setF(stu.id, "injuryNote", e.target.value)}
-                              placeholder="Injury note..."
-                              disabled={isCompletedSession}
-                              className="flex-1 bg-dark-700 border border-red-500/20 rounded-lg px-2 py-1 text-white text-xs focus:outline-none disabled:opacity-40"
-                            />
-                          )}
                         </div>
 
-                        {/* ── Session Note (saved with attendance) ── */}
-                        <div className="pt-2 border-t border-white/5">
-                          <label className="block text-white/40 text-xs font-medium mb-1.5">
-                            📝 Session Note <span className="text-white/20">(saved with attendance · visible to parent)</span>
-                          </label>
-                          <textarea
-                            value={rec.notes ?? ""}
-                            onChange={(e) => setF(stu.id, "notes", e.target.value)}
-                            rows={2}
-                            placeholder="Note about this student for this session…"
+                        {/* Injury note — only when checked */}
+                        {rec.isInjured && (
+                          <input
+                            value={rec.injuryNote ?? ""}
+                            onChange={(e) => setF(stu.id, "injuryNote", e.target.value)}
+                            placeholder="Describe the injury…"
                             disabled={isCompletedSession}
-                            className="w-full bg-dark-700 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-white/30 resize-none disabled:opacity-40"
+                            className="w-full bg-dark-700 border border-red-500/25 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder-red-400/40 focus:outline-none disabled:opacity-40"
                           />
-                        </div>
+                        )}
                       </>
                     )}
                   </div>
