@@ -25,6 +25,8 @@ export interface Student {
   school?: string;
   coachNotes?: string;
   parentId?: string;
+  parentEmail?: string | null;
+  parentPhone?: string | null;
   isActive?: boolean;
   parent?: { id: string; firstName: string; lastName: string; email: string; phone?: string };
   enrollments?: Enrollment[];
@@ -333,8 +335,8 @@ export function ViewModal({
               { label: "Blood Type", value: student.bloodType || "—" },
               { label: "Date of Birth", value: student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : "—" },
               { label: "Parent", value: student.parent ? `${student.parent.firstName} ${student.parent.lastName}` : "—" },
-              { label: "Parent Email", value: student.parent?.email || "—" },
-              { label: "Parent Phone", value: student.parent?.phone || "—" },
+              { label: "Parent Email", value: student.parent?.email || student.parentEmail || "—" },
+              { label: "Parent Phone", value: student.parent?.phone || student.parentPhone || "—" },
               { label: "Joined", value: new Date(student.createdAt).toLocaleDateString() },
             ].map(({ label, value }) => (
               <div key={label} className="bg-dark-900/50 rounded-xl p-3">
@@ -411,7 +413,7 @@ export function ViewModal({
 
 // ── Create / Edit Modal ───────────────────────────────────────────────────────
 
-interface FormState { firstName: string; lastName: string; dateOfBirth: string; nationality: string; bloodType: string; medicalNotes: string; parentId: string; photo: string; newParentFirstName: string; newParentLastName: string; newParentEmail: string; newParentPhone: string; }
+interface FormState { firstName: string; lastName: string; dateOfBirth: string; nationality: string; bloodType: string; medicalNotes: string; parentId: string; photo: string; newParentEmail: string; newParentPhone: string; }
 
 interface EditModalProps {
   editing: Student | null;
@@ -462,34 +464,19 @@ export function EditModal({ editing, form, parents, saving, formError, onChange,
             </div>
           </div>
           <div>
-            <label className="block text-white/50 text-xs mb-1.5">Parent — select existing</label>
+            <label className="block text-white/50 text-xs mb-1.5">Link to Parent Account</label>
             <select value={form.parentId} onChange={(e) => set("parentId", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm">
-              <option value="">No parent assigned</option>
+              <option value="">No account linked</option>
               {parents.map((p) => <option key={p.id} value={p.id}>{p.firstName} {p.lastName} ({p.email}){p.phone ? ` · ${p.phone}` : ""}</option>)}
             </select>
           </div>
-          <div className="relative flex items-center gap-3 py-1">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-white/30 text-xs shrink-0">or create new parent</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-white/50 text-xs mb-1.5">Parent First Name</label>
-              <input value={form.newParentFirstName} onChange={(e) => set("newParentFirstName", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="First name" />
-            </div>
-            <div>
-              <label className="block text-white/50 text-xs mb-1.5">Parent Last Name</label>
-              <input value={form.newParentLastName} onChange={(e) => set("newParentLastName", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="Last name" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-white/50 text-xs mb-1.5">Parent Email *</label>
+              <label className="block text-white/50 text-xs mb-1.5">Parent Email <span className="text-white/25">(optional)</span></label>
               <input type="email" value={form.newParentEmail} onChange={(e) => set("newParentEmail", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="parent@email.com" />
             </div>
             <div>
-              <label className="block text-white/50 text-xs mb-1.5">Parent Phone</label>
+              <label className="block text-white/50 text-xs mb-1.5">Parent Phone <span className="text-white/25">(optional)</span></label>
               <input type="tel" value={form.newParentPhone} onChange={(e) => set("newParentPhone", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="+974 ..." />
             </div>
           </div>

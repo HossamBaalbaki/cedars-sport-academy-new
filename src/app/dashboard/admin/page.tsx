@@ -92,6 +92,7 @@ export default function AdminDashboard() {
       icon: "⚙️",
       links: [
         { label: "Students", href: "/dashboard/admin/students", icon: "👥", desc: "View, add, edit students" },
+        { label: "Users", href: "/dashboard/admin/users", icon: "🧑‍💼", desc: "Registered accounts & roles" },
         { label: "Coaches", href: "/dashboard/admin/coaches", icon: "🏅", desc: "Coach profiles & assignments" },
         { label: "Programs", href: "/dashboard/admin/programs", icon: "📋", desc: "Programs & age groups" },
         { label: "Schedules", href: "/dashboard/admin/schedules", icon: "🗓️", desc: "Class times & days" },
