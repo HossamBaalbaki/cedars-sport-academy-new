@@ -8,7 +8,7 @@ export interface Enrollment {
   sessionsRemaining?: number;
   isActive?: boolean;
   enrolledAt?: string;
-  program?: { name: string };
+  program?: { name: string; locations?: { location?: { name: string } }[] };
 }
 
 export interface Student {
@@ -357,7 +357,10 @@ export function ViewModal({
                     <div key={e.id} className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${enrolled ? "bg-emerald-400" : "bg-white/20"}`} />
-                        <span className="text-white/70 text-sm truncate">{e.program?.name || "Program"}</span>
+                        <span className="text-white/70 text-sm truncate">
+                          {e.program?.name || "Program"}
+                          {(() => { const loc = e.program?.locations?.[0]?.location?.name; return loc ? <span className="text-white/35 text-xs"> · {loc}</span> : null; })()}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className={`text-sm font-bold ${sessColor}`}>
@@ -557,6 +560,7 @@ export interface ProgramOption {
   id: string; name: string; price: number; currency?: string;
   coach?: { user?: { firstName: string; lastName: string } } | null;
   locations?: { location?: { name: string } }[];
+  schedules?: { location?: { name: string } | null }[];
 }
 
 interface EnrollModalProps {
@@ -603,7 +607,8 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
             <select value={programId} onChange={(e) => { setProgramId(e.target.value); const p = programs.find(x => x.id === e.target.value); if (p) setAmount(String(p.price)); }} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm">
               <option value="">Select program...</option>
               {programs.map((p) => {
-                const loc = p.locations?.[0]?.location?.name;
+                const loc = p.locations?.[0]?.location?.name
+                  || p.schedules?.find(s => s.location?.name)?.location?.name;
                 return <option key={p.id} value={p.id}>{p.name}{loc ? ` · ${loc}` : ""} — {p.price} {p.currency ?? "QAR"}</option>;
               })}
             </select>
