@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog, useActivityLog } from "@/hooks/useActivityLog";
 
 const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b013e9830456";
 
@@ -17,6 +18,7 @@ interface UserRow {
   role: string;
   isActive: boolean;
   createdAt: string;
+  lastLoginAt?: string | null;
   children: Child[];
 }
 
@@ -37,14 +39,19 @@ function initials(u: UserRow) {
 // ── Edit Modal ─────────────────────────────────────────────────────────────────
 interface EditForm { firstName: string; lastName: string; email: string; phone: string; role: string; }
 
-function EditUserModal({ user, saving, error, onSave, onClose }: {
+function EditUserModal({ user, saving, error, resetSaving, resetError, onSave, onResetPassword, onClose }: {
   user: UserRow; saving: boolean; error: string | null;
-  onSave: (f: EditForm) => void; onClose: () => void;
+  resetSaving: boolean; resetError: string | null;
+  onSave: (f: EditForm) => void;
+  onResetPassword: (password: string) => void;
+  onClose: () => void;
 }) {
   const [form, setForm] = useState<EditForm>({
     firstName: user.firstName, lastName: user.lastName,
     email: user.email, phone: user.phone || "", role: user.role,
   });
+  const [newPassword, setNewPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const set = (k: keyof EditForm, v: string) => setForm(p => ({ ...p, [k]: v }));
 
   return (
@@ -55,7 +62,7 @@ function EditUserModal({ user, saving, error, onSave, onClose }: {
           <h2 className="text-lg font-bold text-white">Edit User</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-all">✕</button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {error && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
           <div className="grid grid-cols-2 gap-3">
             {(["firstName","lastName"] as const).map(k => (
@@ -78,6 +85,36 @@ function EditUserModal({ user, saving, error, onSave, onClose }: {
             <select value={form.role} onChange={e => set("role", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm">
               {ROLES.map(r => <option key={r} value={r}>{r.replace("_", " ")}</option>)}
             </select>
+          </div>
+
+          {/* ── Reset Password ── */}
+          <div className="pt-2 border-t border-white/5">
+            <div className="text-white/30 text-[10px] font-semibold uppercase tracking-widest mb-3">🔑 Reset Password</div>
+            {resetError && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm mb-3">{resetError}</div>}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type={showPw ? "text" : "password"}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="New password (min. 6 chars)"
+                  autoComplete="new-password"
+                  className="w-full px-3 py-2.5 pr-14 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-yellow-500/50 text-sm"
+                />
+                <button type="button" onClick={() => setShowPw(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors text-xs">
+                  {showPw ? "Hide" : "Show"}
+                </button>
+              </div>
+              <button
+                onClick={() => newPassword.length >= 6 && onResetPassword(newPassword)}
+                disabled={resetSaving || newPassword.length < 6}
+                className="px-4 py-2.5 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 text-yellow-400 text-sm font-semibold border border-yellow-500/20 transition-all disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
+              >
+                {resetSaving && <span className="w-3.5 h-3.5 border-2 border-yellow-400/30 border-t-yellow-400 rounded-full animate-spin" />}
+                {resetSaving ? "Saving…" : "Set"}
+              </button>
+            </div>
           </div>
         </div>
         <div className="px-6 py-4 border-t border-white/5 flex gap-3">
@@ -130,6 +167,8 @@ function ChildrenBadge({ items }: { items: Child[] }) {
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function AdminUsersPage() {
+  usePageLog("Viewed Admin Users");
+  const log = useActivityLog();
   const { token } = useAuth();
 
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -142,6 +181,13 @@ export default function AdminUsersPage() {
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+
+  const [resetSaving, setResetSaving] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  const [logsUser, setLogsUser] = useState<UserRow | null>(null);
+  const [logs, setLogs] = useState<{ id: string; action: string; label: string; path?: string | null; entityId?: string | null; createdAt: string }[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
   const hdrs = useCallback(() => ({
     "Content-Type": "application/json",
@@ -163,6 +209,17 @@ export default function AdminUsersPage() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
+  const openLogs = async (u: UserRow) => {
+    setLogsUser(u); setLogsLoading(true); setLogs([]);
+    log(`Viewed activity logs — ${u.firstName} ${u.lastName}`, { entityId: u.id });
+    try {
+      const r = await fetch(`${API}/activity-logs/user/${u.id}`, { headers: hdrs() });
+      const d = await r.json();
+      setLogs(d.data ?? []);
+    } catch { setLogs([]); }
+    finally { setLogsLoading(false); }
+  };
+
   const handleSave = async (form: EditForm) => {
     if (!editUser) return;
     setSaving(true); setEditError(null);
@@ -179,10 +236,24 @@ export default function AdminUsersPage() {
 
   const handleToggle = async (u: UserRow) => {
     setToggling(u.id);
+    log(`${u.isActive ? "Deactivated" : "Activated"} user — ${u.firstName} ${u.lastName}`, { entityId: u.id });
     try {
       await fetch(`${API}/users/${u.id}/toggle`, { method: "PATCH", headers: hdrs() });
       fetchUsers();
     } finally { setToggling(null); }
+  };
+
+  const handleResetPassword = async (password: string) => {
+    if (!editUser) return;
+    setResetSaving(true); setResetError(null);
+    try {
+      const r = await fetch(`${API}/users/${editUser.id}/reset-password`, {
+        method: "PATCH", headers: hdrs(),
+        body: JSON.stringify({ password }),
+      });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); setResetError(e.message || "Failed to reset password"); }
+    } catch { setResetError("Network error"); }
+    finally { setResetSaving(false); }
   };
 
   const filtered = users.filter(u => {
@@ -263,7 +334,11 @@ export default function AdminUsersPage() {
                           </div>
                           <div>
                             <div className="text-white font-medium text-sm">{u.firstName} {u.lastName}</div>
-                            <div className="text-white/30 text-xs">{u.id.slice(0, 8)}…</div>
+                            <div className="text-white/30 text-xs">
+                              {u.lastLoginAt
+                                ? `Last login: ${new Date(u.lastLoginAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                                : "Never logged in"}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -295,9 +370,15 @@ export default function AdminUsersPage() {
                       </td>
                       {/* Actions */}
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <button
-                            onClick={() => { setEditUser(u); setEditError(null); }}
+                            onClick={() => openLogs(u)}
+                            className="px-3 py-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 text-xs font-medium transition-all border border-violet-500/20"
+                          >
+                            📋 Logs
+                          </button>
+                          <button
+                            onClick={() => { setEditUser(u); setEditError(null); log(`Opened edit user — ${u.firstName} ${u.lastName}`, { entityId: u.id }); }}
                             className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs font-medium transition-all border border-white/5"
                           >
                             Edit
@@ -321,7 +402,74 @@ export default function AdminUsersPage() {
       </div>
 
       {editUser && (
-        <EditUserModal user={editUser} saving={saving} error={editError} onSave={handleSave} onClose={() => setEditUser(null)} />
+        <EditUserModal
+          user={editUser} saving={saving} error={editError}
+          resetSaving={resetSaving} resetError={resetError}
+          onSave={handleSave} onResetPassword={handleResetPassword}
+          onClose={() => { setEditUser(null); setResetError(null); }}
+        />
+      )}
+
+      {/* ── Activity Logs Drawer ── */}
+      {logsUser && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setLogsUser(null)} />
+          <div className="fixed right-0 top-0 h-full z-50 w-full max-w-xl bg-dark-900 border-l border-white/10 shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className="flex items-center gap-4 px-6 py-5 border-b border-white/5 shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500/30 to-violet-500/10 border border-violet-500/20 flex items-center justify-center text-sm font-bold text-violet-400 shrink-0">
+                {initials(logsUser)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-white font-bold">{logsUser.firstName} {logsUser.lastName}</div>
+                <div className="text-white/40 text-xs mt-0.5">Activity logs · {logs.length} event{logs.length !== 1 ? "s" : ""}</div>
+              </div>
+              <button onClick={() => setLogsUser(null)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-all shrink-0">✕</button>
+            </div>
+
+            {/* Log list */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {logsLoading ? (
+                <div className="flex items-center justify-center py-20 text-white/30 text-sm">Loading…</div>
+              ) : logs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-white/25 text-sm gap-2">
+                  <span className="text-3xl">📋</span>
+                  <span>No activity recorded yet</span>
+                </div>
+              ) : (
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/5" />
+                  <div className="space-y-1">
+                    {logs.map((l, i) => {
+                      const isPage  = l.action === "PAGE_VIEW";
+                      const isLogin = l.label.toLowerCase().includes("login");
+                      const dot = isLogin ? "bg-green-400" : isPage ? "bg-violet-400/60" : "bg-lebanon-green";
+                      return (
+                        <div key={l.id} className="flex gap-4 py-2 group">
+                          <div className={`w-[22px] h-[22px] rounded-full border-2 border-dark-900 flex items-center justify-center shrink-0 mt-0.5 ${dot}`}>
+                            <span className="text-[8px]">{isLogin ? "🔑" : isPage ? "👁" : "⚡"}</span>
+                          </div>
+                          <div className="flex-1 min-w-0 pb-2 border-b border-white/[0.04] group-last:border-0">
+                            <div className="text-white/80 text-sm font-medium leading-snug">{l.label}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-white/25 text-[10px]">
+                                {new Date(l.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                                {" · "}
+                                {new Date(l.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                              {l.path && <span className="text-white/15 text-[10px] font-mono truncate">{l.path}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

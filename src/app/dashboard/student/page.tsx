@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 import { schedulesApi } from "@/lib/api";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -31,6 +32,7 @@ function fmt12(t: string): string {
 }
 
 export default function StudentDashboard() {
+  usePageLog("Viewed Student Dashboard");
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const [schedules, setSchedules] = useState<LiveSchedule[]>([]);

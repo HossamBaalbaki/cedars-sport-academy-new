@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 import { studentsApi, programsApi, locationsApi, notificationsApi, paymentsApi } from "@/lib/api";
 import {
   AddChildModal, EditChildModal, EnrollModal, UnenrollConfirm,
@@ -71,6 +72,7 @@ function attRate(records: AttendanceRecord[]) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ParentDashboard() {
+  usePageLog("Viewed Parent Dashboard");
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
 

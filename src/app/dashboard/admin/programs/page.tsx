@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 import {
   CreateProgramModal, EditProgramModal, DeleteProgramModal, EnrollStudentModal,
   type Program, type AgeGroup, type CoachOption, type StudentOption, type ProgramFormData,
@@ -26,6 +27,7 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export default function AdminProgramsPage() {
+  usePageLog("Viewed Admin Programs");
   const { user, isAuthenticated, isLoading, token } = useAuth();
   const router = useRouter();
 

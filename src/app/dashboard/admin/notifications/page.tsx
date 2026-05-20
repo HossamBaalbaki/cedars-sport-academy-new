@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 import { notificationsApi } from "@/lib/api";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
@@ -61,6 +62,7 @@ const TYPE_CONFIG: Record<NotifType, { label: string; icon: string; color: strin
 const ALL_TYPES = Object.keys(TYPE_CONFIG) as NotifType[];
 
 export default function AdminNotificationsPage() {
+  usePageLog("Viewed Admin Notifications");
   const { user, isAuthenticated, isLoading, token } = useAuth();
   const router = useRouter();
 

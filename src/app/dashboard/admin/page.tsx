@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 
 interface DashboardStats {
   totalStudents: number;
@@ -22,6 +23,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+  usePageLog("Viewed Admin Dashboard");
   const { user, isAuthenticated, isLoading, logout, token } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);

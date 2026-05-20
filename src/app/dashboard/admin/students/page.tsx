@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 import { studentsApi, programsApi } from "@/lib/api";
 import {
   Student, Parent, AttendanceRecord,
@@ -18,6 +19,7 @@ const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b01
 const EMPTY_FORM = { firstName: "", lastName: "", dateOfBirth: "", nationality: "", bloodType: "", medicalNotes: "", parentId: "", photo: "", newParentEmail: "", newParentPhone: "" };
 
 export default function AdminStudentsPage() {
+  usePageLog("Viewed Admin Students");
   const { user, isAuthenticated, isLoading, token } = useAuth();
   const router = useRouter();
 

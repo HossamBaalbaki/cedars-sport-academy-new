@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 import { CreateCoachModal, EditCoachModal, DeleteCoachModal } from "./CoachModals";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
@@ -17,6 +18,7 @@ interface Coach {
 }
 
 export default function AdminCoachesPage() {
+  usePageLog("Viewed Admin Coaches");
   const { user, isAuthenticated, isLoading, token } = useAuth();
   const router = useRouter();
   const [coaches, setCoaches] = useState<Coach[]>([]);

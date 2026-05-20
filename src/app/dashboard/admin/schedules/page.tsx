@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b013e9830456";
@@ -63,6 +64,7 @@ function formFromSched(s: Schedule, programs: Program[]): ScheduleForm {
 }
 
 export default function AdminSchedulesPage() {
+  usePageLog("Viewed Admin Schedules");
   const { user, isAuthenticated, isLoading, token } = useAuth();
   const router = useRouter();
   const [schedules, setSchedules] = useState<Schedule[]>([]);

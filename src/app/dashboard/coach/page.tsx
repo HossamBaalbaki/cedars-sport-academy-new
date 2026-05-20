@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { usePageLog } from "@/hooks/useActivityLog";
 import { schedulesApi, coachSessionsApi } from "@/lib/api";
 import { StartSessionModal, AttendanceModal, StudentProfileModal } from "./CoachModals";
 import type { Sched, Session, MyStudent } from "./CoachModals";
@@ -72,6 +73,7 @@ function SessionRow({
 }
 
 export default function CoachDashboard() {
+  usePageLog("Viewed Coach Dashboard");
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
 
