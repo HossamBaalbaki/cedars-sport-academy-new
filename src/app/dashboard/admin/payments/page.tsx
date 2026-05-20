@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { usePageLog, useActivityLog } from "@/hooks/useActivityLog";
 import { paymentsApi } from "@/lib/api";
+import * as XLSX from "xlsx";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface PaymentRow {
@@ -101,6 +102,7 @@ async function exportPDF(group: ParentGroup) {
   });
 
   // Footer totals
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const finalY = (doc as any).lastAutoTable.finalY + 6;
   doc.setFontSize(9);
   doc.setTextColor(50, 50, 50);
@@ -113,8 +115,6 @@ async function exportPDF(group: ParentGroup) {
 }
 
 function exportExcel(group: ParentGroup) {
-  // Dynamic import isn't needed for xlsx — it's a CommonJS module
-  const XLSX = require("xlsx") as typeof import("xlsx");
 
   const rows = group.payments.map(p => ({
     "Parent":        group.parentName,
@@ -512,7 +512,8 @@ export default function AdminPaymentsPage() {
         margin: { left: 14, right: 14 },
       });
 
-      const finalY = (doc as any).lastAutoTable.finalY + 6;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const finalY = (doc as any).lastAutoTable.finalY + 6;
       const totalCollected = allPayments.filter(p => p.status === "PAID").reduce((s, p) => s + p.amount, 0);
       doc.setFontSize(9); doc.setTextColor(50, 50, 50); doc.setFont("helvetica", "bold");
       doc.text(`Total Collected: ${totalCollected.toLocaleString()} QAR   |   Records: ${allPayments.length}`, 14, finalY);
@@ -524,7 +525,6 @@ export default function AdminPaymentsPage() {
   function exportAllExcel(visibleGroups: ParentGroup[]) {
     setExportingAll("xlsx");
     try {
-      const XLSX = require("xlsx") as typeof import("xlsx");
       const rows = visibleGroups.flatMap(g =>
         g.payments.map(p => ({
           "Parent":         g.isUnlinked ? "—" : g.parentName,
