@@ -441,7 +441,7 @@ export default function AdminUsersPage() {
                   {/* Timeline line */}
                   <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/5" />
                   <div className="space-y-1">
-                    {logs.map((l, i) => {
+                    {logs.map((l) => {
                       const isPage  = l.action === "PAGE_VIEW";
                       const isLogin = l.label.toLowerCase().includes("login");
                       const dot = isLogin ? "bg-green-400" : isPage ? "bg-violet-400/60" : "bg-lebanon-green";
