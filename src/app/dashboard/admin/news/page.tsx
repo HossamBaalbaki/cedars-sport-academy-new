@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import MediaUpload from "@/components/ui/MediaUpload";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b013e9830456";
@@ -233,12 +234,11 @@ export default function AdminNewsPage() {
                   className="px-4 py-3 rounded-xl bg-dark-800 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 text-sm"
                 />
               </div>
-              <input
-                type="url"
-                placeholder="Cover Image URL (optional)"
+              <MediaUpload
                 value={form.image}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-dark-800 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 text-sm"
+                onChange={url => setForm({ ...form, image: url })}
+                accept="image"
+                hint="Cover image for the article"
               />
               <textarea
                 placeholder="Content *"

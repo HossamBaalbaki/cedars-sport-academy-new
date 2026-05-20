@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { usePageLog } from "@/hooks/useActivityLog";
+import MediaUpload from "@/components/ui/MediaUpload";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b013e9830456";
@@ -354,32 +355,12 @@ function LocationModal({ title, form, setForm, saving, err, onClose, onSave, sav
             </div>
           </div>
 
-          <div>
-            <label className={labelCls}>Image URL</label>
-            <input type="text" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} placeholder="https://..." className={inputCls} />
-          </div>
-
-          {form.image.trim() && (
-            <div>
-              <label className={labelCls}>Image Preview</label>
-              <div className="relative w-full h-36 rounded-xl overflow-hidden border border-white/10 bg-dark-900">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={form.image.trim()} alt="Location preview"
-                  className="w-full h-full object-cover"
-                  onError={e => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                    const next = e.currentTarget.nextElementSibling as HTMLElement | null;
-                    if (next) next.style.display = "flex";
-                  }}
-                />
-                <div className="absolute inset-0 hidden items-center justify-center text-white/30 text-sm flex-col gap-1">
-                  <span className="text-2xl">🖼️</span><span>Invalid image URL</span>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-dark-900/40 to-transparent pointer-events-none" />
-              </div>
-            </div>
-          )}
+          <MediaUpload
+            label="Location Image"
+            value={form.image}
+            onChange={url => setForm({ ...form, image: url })}
+            accept="image"
+          />
 
           <div>
             <label className={labelCls}>Facilities <span className="text-white/30">(comma-separated)</span></label>

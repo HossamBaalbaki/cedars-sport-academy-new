@@ -14,6 +14,7 @@ import {
   type Enrollment, type AttendanceRecord,
 } from "./DashboardTabs";
 import { IDCardModal, type Student } from "../dashboard/admin/students/StudentModals";
+import SponsorsStrip from "@/components/home/SponsorsStrip";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -298,6 +299,7 @@ export default function ParentDashboard() {
         nationality: addForm.nationality || undefined, bloodType: addForm.bloodType || undefined,
         school: addForm.school || undefined, medicalCardNumber: addForm.medicalCardNumber || undefined,
         medicalNotes: addForm.medicalNotes || undefined,
+        photo: addForm.photo || undefined,
       });
       setNewChildId((res.data as { id: string }).id);
       await fetchData(); setAddStep(2);
@@ -329,7 +331,7 @@ export default function ParentDashboard() {
       dateOfBirth: child.dateOfBirth?.split("T")[0] ?? "",
       nationality: child.nationality ?? "", bloodType: child.bloodType ?? "",
       school: child.school ?? "", medicalCardNumber: child.medicalCardNumber ?? "",
-      medicalNotes: child.medicalNotes ?? "",
+      medicalNotes: child.medicalNotes ?? "", photo: child.photo ?? "",
     });
     setEditError(null); setShowEdit(true);
   }
@@ -355,6 +357,7 @@ export default function ParentDashboard() {
         nationality: editForm.nationality || undefined, bloodType: editForm.bloodType || undefined,
         school: editForm.school || undefined, medicalCardNumber: editForm.medicalCardNumber || undefined,
         medicalNotes: editForm.medicalNotes || undefined,
+        photo: editForm.photo || undefined,
       });
       await fetchData(); setShowEdit(false);
     } catch (e) { setEditError(e instanceof Error ? e.message : "Failed to update"); }
@@ -862,6 +865,7 @@ export default function ParentDashboard() {
         />
       )}
 
+      <SponsorsStrip />
     </div>
   );
 }

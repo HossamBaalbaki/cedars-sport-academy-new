@@ -3,8 +3,10 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { usePageLog, useActivityLog } from "@/hooks/useActivityLog";
+import { useTenant } from "@/context/TenantContext";
 import { paymentsApi } from "@/lib/api";
 import * as XLSX from "xlsx";
 
@@ -29,6 +31,7 @@ interface PaymentRow {
   coachName?: string | null;
   parentFirstName?: string | null;
   parentLastName?: string | null;
+  sessionsTotal?: number | null;
 }
 
 interface ParentGroup {
@@ -158,74 +161,322 @@ function recordedBy(notes: string | null | undefined) {
 
 // ── Invoice Modal ──────────────────────────────────────────────────────────────
 function InvoiceModal({ payment, onClose }: { payment: PaymentRow; onClose: () => void }) {
+  const { tenant } = useTenant();
   const studentName = [payment.studentFirstName, payment.studentLastName].filter(Boolean).join(" ") || "—";
   const parentName  = [payment.parentFirstName,  payment.parentLastName ].filter(Boolean).join(" ") || "—";
   const dob = payment.dateOfBirth
-    ? new Date(payment.dateOfBirth).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(payment.dateOfBirth).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
     : "—";
-  const paymentDate = payment.paidAt
-    ? new Date(payment.paidAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
-    : new Date(payment.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+  const invoiceDate = payment.paidAt || payment.createdAt;
+  const fmtInvoiceDate = new Date(invoiceDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+  const invoiceNo = payment.transactionId
+    ? payment.transactionId.slice(-8).toUpperCase()
+    : `INV-${payment.id.slice(-6).toUpperCase()}`;
+  const currency = payment.currency || "QAR";
+  const amount = payment.amount?.toLocaleString() ?? "0";
+  const sessions = payment.sessionsTotal ?? 8;
+  const logoUrl = tenant.logo ? (window.location.origin + tenant.logo) : "";
 
-  const sections = [
-    { title: "Student Information", rows: [
-      { label: "Student Name",   value: studentName },
-      { label: "CSA Code",       value: payment.studentCode || "—" },
-      { label: "Date of Birth",  value: dob },
-      { label: "Parent",         value: parentName },
-    ]},
-    { title: "Program Details", rows: [
-      { label: "Program / Sport", value: payment.programName  || "—" },
-      { label: "Location",        value: payment.locationName || "—" },
-      { label: "Coach",           value: payment.coachName    || "—" },
-    ]},
-    { title: "Payment Details", rows: [
-      { label: "Date of Payment",  value: paymentDate },
-      { label: "Payment Method",   value: payment.method || "—" },
-      { label: "Transaction Code", value: payment.transactionId || "—", mono: true },
-      { label: "Status",           value: payment.status },
-    ]},
-  ];
+  function printInvoice() {
+    const statusBg = payment.status === "PAID" ? "#d1fae5" : "#fef3c7";
+    const statusColor = payment.status === "PAID" ? "#065f46" : "#92400e";
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Invoice ${invoiceNo}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #fff; color: #333; padding: 32px; }
+    .header { background: #00A651; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; border-radius: 12px 12px 0 0; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo-box { width: 56px; height: 56px; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .logo-box img { width: 48px; height: 48px; object-fit: contain; }
+    .academy-name { color: #fff; font-size: 18px; font-weight: 900; }
+    .academy-sub { color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 2px; }
+    .header-right { text-align: right; color: rgba(255,255,255,0.85); font-size: 12px; line-height: 1.7; }
+    .section { display: flex; justify-content: space-between; align-items: flex-start; padding: 24px 32px 20px; border-bottom: 2px solid rgba(0,166,81,0.15); }
+    .bill-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .bill-name { font-size: 16px; font-weight: 700; color: #1f2937; }
+    .bill-sub { font-size: 13px; color: #6b7280; margin-top: 3px; }
+    .bill-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; font-family: monospace; }
+    .invoice-badge { background: #1a1a1a; color: #FFD700; font-size: 24px; font-weight: 900; padding: 8px 20px; border-radius: 8px; letter-spacing: 0.15em; }
+    .invoice-meta { margin-top: 12px; text-align: right; }
+    .invoice-meta-row { display: flex; justify-content: flex-end; gap: 12px; font-size: 13px; margin-top: 4px; }
+    .meta-label { color: #9ca3af; }
+    .meta-value { font-weight: 600; color: #374151; }
+    .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: ${statusBg}; color: ${statusColor}; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 32px 0; width: calc(100% - 64px); }
+    thead tr { background: #00A651; }
+    thead th { color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 16px; text-align: left; }
+    thead th:last-child, thead th:nth-child(2), thead th:nth-child(3) { text-align: right; }
+    thead th:nth-child(3) { text-align: center; }
+    tbody td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
+    .desc-main { font-weight: 600; color: #1f2937; }
+    .desc-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .totals { display: flex; justify-content: flex-end; padding: 12px 32px 20px; }
+    .totals-box { width: 220px; }
+    .totals-row { display: flex; justify-content: space-between; font-size: 13px; color: #6b7280; margin-bottom: 6px; }
+    .totals-total { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; color: #1f2937; border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 8px; }
+    .totals-total span:last-child { color: #00A651; }
+    .totals-method { display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-top: 4px; }
+    .terms { margin: 0 32px 24px; padding: 12px 16px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; }
+    .terms-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+    .terms p { font-size: 11px; color: #9ca3af; line-height: 1.6; }
+    @media print {
+      body { padding: 0; }
+      .header { border-radius: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .invoice-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      ${logoUrl ? `<div class="logo-box"><img src="${logoUrl}" alt="${tenant.name}"/></div>` : ""}
+      <div>
+        <div class="academy-name">${tenant.name}</div>
+        <div class="academy-sub">Doha, Qatar</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div>Phone: ${tenant.phone}</div>
+      <div>cedarssports.com</div>
+      <div>${tenant.email}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div>
+      <div class="bill-label">Bill To</div>
+      <div class="bill-name">${parentName}</div>
+      <div class="bill-sub">${studentName}</div>
+      ${payment.studentCode ? `<div class="bill-meta">Code: ${payment.studentCode}</div>` : ""}
+      ${payment.dateOfBirth ? `<div class="bill-meta">DOB: ${dob}</div>` : ""}
+    </div>
+    <div style="text-align:right">
+      <div class="invoice-badge">INVOICE</div>
+      <div class="invoice-meta">
+        <div class="invoice-meta-row"><span class="meta-label">Invoice No:</span><span class="meta-value" style="font-family:monospace">${invoiceNo}</span></div>
+        <div class="invoice-meta-row"><span class="meta-label">Date:</span><span class="meta-value">${fmtInvoiceDate}</span></div>
+        <div class="invoice-meta-row"><span class="meta-label">Status:</span><span class="status-badge">${payment.status}</span></div>
+        ${payment.transactionId ? `<div class="invoice-meta-row"><span class="meta-label">Transaction:</span><span class="meta-value" style="font-family:monospace;font-size:10px;word-break:break-all;max-width:180px;text-align:right">${payment.transactionId}</span></div>` : ""}
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="text-right">Unit Price</th>
+        <th class="text-center">Sessions</th>
+        <th class="text-right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="desc-main">${payment.programName || "Sports Program"}</div>
+          ${payment.locationName ? `<div class="desc-sub">Location: ${payment.locationName}</div>` : ""}
+          ${payment.coachName ? `<div class="desc-sub">Coach: ${payment.coachName}</div>` : ""}
+        </td>
+        <td class="text-right">${amount} ${currency}</td>
+        <td class="text-center">${sessions}</td>
+        <td class="text-right" style="font-weight:700">${amount} ${currency}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Subtotal</span><span>${amount} ${currency}</span></div>
+      <div class="totals-row"><span>Discount</span><span>0.00</span></div>
+      <div class="totals-total"><span>TOTAL</span><span>${amount} ${currency}</span></div>
+      ${payment.method ? `<div class="totals-method"><span>Paid via</span><span>${payment.method.charAt(0) + payment.method.slice(1).toLowerCase()}</span></div>` : ""}
+    </div>
+  </div>
+
+  <div class="terms">
+    <div class="terms-label">Terms &amp; Conditions</div>
+    <p>All payments are final. Sessions are non-transferable and must be used within the enrollment period.</p>
+  </div>
+
+  <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; };<\/script>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank", "width=800,height=900");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+  }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="bg-[#00A651] px-6 py-5 text-center">
-          <div className="text-white font-black text-xl tracking-wide">Cedars Sport Academy</div>
-          <div className="text-white/70 text-xs mt-0.5 tracking-widest uppercase">Payment Receipt</div>
-        </div>
-        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100">
-          <div>
-            <div className="text-gray-400 text-xs uppercase tracking-wider">Transaction Ref</div>
-            <div className="font-mono text-sm font-semibold text-gray-700 mt-0.5">{payment.transactionId || "—"}</div>
+      <div
+        id="invoice-print-area"
+        className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+        style={{ fontFamily: "Arial, sans-serif" }}
+      >
+        {/* ── Green header bar ── */}
+        <div style={{ background: "#00A651" }} className="px-8 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {tenant.logo ? (
+              <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center overflow-hidden shrink-0">
+                <Image src={tenant.logo} alt={tenant.name} width={48} height={48} className="object-contain" />
+              </div>
+            ) : (
+              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center text-white font-black text-xl">
+                CS
+              </div>
+            )}
+            <div>
+              <div className="text-white font-black text-lg leading-tight">{tenant.name}</div>
+              <div className="text-white/80 text-xs mt-0.5">Doha, Qatar</div>
+            </div>
           </div>
           <div className="text-right">
-            <span className="inline-block bg-[#00A651] text-white text-xs font-bold px-3 py-1 rounded-full mb-1">{payment.status}</span>
-            <div className="text-2xl font-black text-gray-800">
-              {payment.amount?.toLocaleString()} <span className="text-sm font-semibold text-gray-400">{payment.currency || "QAR"}</span>
+            <div className="text-white/80 text-xs">Phone: {tenant.phone}</div>
+            <div className="text-white/80 text-xs mt-0.5">cedarssports.com</div>
+            <div className="text-white/80 text-xs mt-0.5">{tenant.email}</div>
+          </div>
+        </div>
+
+        {/* ── INVOICE title + Bill To ── */}
+        <div className="flex items-start justify-between px-8 pt-6 pb-5 border-b-2 border-[#00A651]/20">
+          {/* Bill To */}
+          <div>
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Bill To</div>
+            <div className="text-gray-800 font-bold text-base">{parentName}</div>
+            <div className="text-gray-500 text-sm mt-0.5">{studentName}</div>
+            {payment.studentCode && (
+              <div className="text-gray-400 text-xs font-mono mt-0.5">Code: {payment.studentCode}</div>
+            )}
+            {payment.dateOfBirth && (
+              <div className="text-gray-400 text-xs mt-0.5">DOB: {dob}</div>
+            )}
+          </div>
+          {/* INVOICE badge */}
+          <div className="text-right">
+            <div
+              className="inline-block px-5 py-2 rounded-lg font-black text-2xl tracking-widest"
+              style={{ background: "#1a1a1a", color: "#FFD700", letterSpacing: "0.15em" }}
+            >
+              INVOICE
+            </div>
+            <div className="mt-3 space-y-1">
+              <div className="flex items-center justify-end gap-3 text-sm">
+                <span className="text-gray-400">Invoice No:</span>
+                <span className="font-mono font-bold text-gray-700">{invoiceNo}</span>
+              </div>
+              <div className="flex items-center justify-end gap-3 text-sm">
+                <span className="text-gray-400">Date:</span>
+                <span className="font-semibold text-gray-700">{fmtInvoiceDate}</span>
+              </div>
+              <div className="flex items-center justify-end gap-3 text-sm">
+                <span className="text-gray-400">Status:</span>
+                <span
+                  className="font-bold px-2 py-0.5 rounded text-xs"
+                  style={{
+                    background: payment.status === "PAID" ? "#d1fae5" : "#fef3c7",
+                    color: payment.status === "PAID" ? "#065f46" : "#92400e",
+                  }}
+                >
+                  {payment.status}
+                </span>
+              </div>
+              {payment.transactionId && (
+                <div className="flex items-center justify-end gap-3 text-sm mt-1">
+                  <span className="text-gray-400">Transaction:</span>
+                  <span className="font-mono text-xs font-semibold text-gray-600 break-all max-w-[180px] text-right">{payment.transactionId}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
-        <div className="px-6 py-4 space-y-4 max-h-[55vh] overflow-y-auto">
-          {sections.map(s => (
-            <div key={s.title}>
-              <div className="text-[10px] font-bold text-[#00A651] uppercase tracking-widest mb-2 border-b border-[#00A651]/20 pb-1">{s.title}</div>
-              <table className="w-full text-sm">
-                <tbody>
-                  {s.rows.map(r => (
-                    <tr key={r.label} className="border-b border-gray-50 last:border-0">
-                      <td className="py-1.5 text-gray-400 w-[45%]">{r.label}</td>
-                      <td className={`py-1.5 font-semibold text-gray-700 ${"mono" in r && r.mono ? "font-mono text-xs" : ""}`}>{r.value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+        {/* ── Items table ── */}
+        <div className="px-8 pt-5">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr style={{ background: "#00A651" }}>
+                <th className="text-left px-4 py-2.5 text-white font-bold text-xs uppercase tracking-wider rounded-tl-lg">Description</th>
+                <th className="text-right px-4 py-2.5 text-white font-bold text-xs uppercase tracking-wider">Unit Price</th>
+                <th className="text-center px-4 py-2.5 text-white font-bold text-xs uppercase tracking-wider">Sessions</th>
+                <th className="text-right px-4 py-2.5 text-white font-bold text-xs uppercase tracking-wider rounded-tr-lg">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-gray-100">
+                <td className="px-4 py-3 text-gray-700">
+                  <div className="font-semibold">{payment.programName || "Sports Program"}</div>
+                  {payment.locationName && <div className="text-gray-400 text-xs mt-0.5">📍 {payment.locationName}</div>}
+                  {payment.coachName && <div className="text-gray-400 text-xs">Coach: {payment.coachName}</div>}
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-gray-700">
+                  {payment.amount?.toLocaleString()} {payment.currency || "QAR"}
+                </td>
+                <td className="px-4 py-3 text-center font-bold text-gray-700">{payment.sessionsTotal ?? 8}</td>
+                <td className="px-4 py-3 text-right font-bold text-gray-800">
+                  {payment.amount?.toLocaleString()} {payment.currency || "QAR"}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* ── Totals ── */}
+          <div className="flex justify-end pt-3 pb-5">
+            <div className="w-56 space-y-1.5">
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Subtotal</span>
+                <span>{payment.amount?.toLocaleString()} {payment.currency || "QAR"}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Discount</span>
+                <span>0.00</span>
+              </div>
+              <div className="flex justify-between font-black text-base text-gray-800 border-t border-gray-200 pt-2 mt-2">
+                <span>TOTAL</span>
+                <span style={{ color: "#00A651" }}>{payment.amount?.toLocaleString()} {payment.currency || "QAR"}</span>
+              </div>
+              {payment.method && (
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>Paid via</span>
+                  <span className="capitalize">{payment.method.toLowerCase()}</span>
+                </div>
+              )}
             </div>
-          ))}
+          </div>
         </div>
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
-          <button onClick={() => window.print()} className="flex-1 px-4 py-2 rounded-xl bg-[#00A651] text-white text-sm font-semibold hover:bg-[#00A651]/80 transition-all">🖨️ Print</button>
-          <button onClick={onClose} className="flex-1 px-4 py-2 rounded-xl bg-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-300 transition-all">Close</button>
+
+        {/* ── Terms ── */}
+        <div className="mx-8 mb-5 px-4 py-3 rounded-xl bg-gray-50 border border-gray-100">
+          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Terms &amp; Conditions</div>
+          <p className="text-gray-400 text-xs leading-relaxed">
+            All payments are final. Sessions are non-transferable and must be used within the enrollment period.
+          </p>
+        </div>
+
+        {/* ── Footer actions ── */}
+        <div className="px-8 pb-6 flex gap-3">
+          <button
+            onClick={printInvoice}
+            className="flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-bold transition-all"
+            style={{ background: "#00A651" }}
+          >
+            🖨️ Print Invoice
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition-all"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>

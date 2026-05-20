@@ -1,5 +1,7 @@
 "use client";
 
+import MediaUpload from "@/components/ui/MediaUpload";
+
 const inputCls = "w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm";
 const labelCls = "block text-white/60 text-xs font-medium mb-1.5";
 const selectCls = "w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white focus:outline-none focus:border-lebanon-green/50 text-sm";
@@ -93,33 +95,16 @@ export function ProgramFormFields({ form, setForm, ageGroups, coaches }: Program
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelCls}>Icon (emoji or URL)</label>
+          <label className={labelCls}>Icon (emoji)</label>
           <input type="text" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} placeholder="⚽" className={inputCls} />
         </div>
-        <div>
-          <label className={labelCls}>Image URL</label>
-          <input type="text" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} placeholder="https://..." className={inputCls} />
-        </div>
       </div>
-      {form.image.trim() && (
-        <div>
-          <label className={labelCls}>Image Preview</label>
-          <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10 bg-dark-900">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={form.image.trim()}
-              alt="Program preview"
-              className="w-full h-full object-cover"
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; const next = e.currentTarget.nextElementSibling as HTMLElement | null; if (next) next.style.display = "flex"; }}
-            />
-            <div className="absolute inset-0 hidden items-center justify-center text-white/30 text-sm flex-col gap-1">
-              <span className="text-2xl">🖼️</span>
-              <span>Invalid image URL</span>
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-dark-900/40 to-transparent pointer-events-none" />
-          </div>
-        </div>
-      )}
+      <MediaUpload
+        label="Program Image"
+        value={form.image}
+        onChange={url => setForm({ ...form, image: url })}
+        accept="image"
+      />
       <div>
         <label className={labelCls}>Status</label>
         <div className="flex items-center gap-2">

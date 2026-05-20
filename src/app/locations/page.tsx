@@ -57,6 +57,7 @@ export default async function LocationsPage() {
                   src={location.image || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80"}
                   alt={location.name}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-dark-900/60 to-transparent" />

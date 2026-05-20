@@ -1,5 +1,7 @@
 "use client";
 
+import MediaUpload from "@/components/ui/MediaUpload";
+
 const inputCls = "w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm";
 const labelCls = "block text-white/60 text-xs font-medium mb-1.5";
 
@@ -61,27 +63,12 @@ export function CreateCoachModal(p: CreateModalProps) {
               </div>
               <p className="text-white/40 text-xs">Fill in the coach profile details (all optional).</p>
 
-              {/* Photo URL with live preview */}
-              <div>
-                <label className={labelCls}>Photo URL</label>
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-dark-900 border border-white/10 flex-shrink-0 flex items-center justify-center">
-                    {p.pPhoto ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.pPhoto} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    ) : (
-                      <span className="text-white/20 text-xl">👤</span>
-                    )}
-                  </div>
-                  <input
-                    type="url"
-                    value={p.pPhoto}
-                    onChange={e => p.setPPhoto(e.target.value)}
-                    placeholder="https://example.com/photo.jpg"
-                    className={`${inputCls} flex-1`}
-                  />
-                </div>
-              </div>
+              <MediaUpload
+                label="Coach Photo"
+                value={p.pPhoto}
+                onChange={url => p.setPPhoto(url)}
+                accept="image"
+              />
 
               <div><label className={labelCls}>Bio</label><textarea value={p.pBio} onChange={e => p.setPBio(e.target.value)} placeholder="Coach biography..." rows={3} className={`${inputCls} resize-none`} /></div>
               <div className="grid grid-cols-2 gap-4">
@@ -174,21 +161,12 @@ export function EditCoachModal(p: EditModalProps) {
           <div>
             <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-3">Coach Profile</p>
             <div className="space-y-3">
-              {/* Photo URL with live preview */}
-              <div>
-                <label className={labelCls}>Photo URL</label>
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-dark-900 border border-white/10 flex-shrink-0 flex items-center justify-center">
-                    {p.photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.photo} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    ) : (
-                      <span className="text-white/20 text-xl">👤</span>
-                    )}
-                  </div>
-                  <input type="url" value={p.photo} onChange={e => p.setPhoto(e.target.value)} placeholder="https://example.com/photo.jpg" className={`${inputCls} flex-1`} />
-                </div>
-              </div>
+              <MediaUpload
+                label="Coach Photo"
+                value={p.photo}
+                onChange={url => p.setPhoto(url)}
+                accept="image"
+              />
               <div><label className={labelCls}>Bio</label><textarea value={p.bio} onChange={e => p.setBio(e.target.value)} placeholder="Coach biography..." rows={3} className={`${inputCls} resize-none`} /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><label className={labelCls}>Experience (years)</label><input type="number" min="0" value={p.exp} onChange={e => p.setExp(e.target.value)} placeholder="5" className={inputCls} /></div>

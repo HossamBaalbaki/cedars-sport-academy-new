@@ -47,6 +47,7 @@ export default async function NewsArticlePage({ params }: Props) {
             src={article.image}
             alt={article.title}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import MediaUpload from "@/components/ui/MediaUpload";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b013e9830456";
@@ -210,33 +211,30 @@ export default function AdminGalleryPage() {
               </select>
 
               {mediaType === "photo" ? (
-                <input
-                  type="url"
-                  placeholder="Image URL *"
-                  value={form.imageUrl}
-                  onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                  className="px-4 py-3 rounded-xl bg-dark-800 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 text-sm md:col-span-2"
-                />
-              ) : (
-                <>
-                  <input
-                    type="url"
-                    placeholder="Video URL * (YouTube: https://youtube.com/watch?v=... or direct .mp4 URL)"
-                    value={form.videoUrl}
-                    onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-                    className="px-4 py-3 rounded-xl bg-dark-800 border border-blue-500/30 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/60 text-sm md:col-span-2"
-                  />
-                  <input
-                    type="url"
-                    placeholder="Thumbnail Image URL (optional — leave blank to auto-use YouTube thumbnail)"
+                <div className="md:col-span-2">
+                  <MediaUpload
+                    label="Photo"
                     value={form.imageUrl}
-                    onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                    className="px-4 py-3 rounded-xl bg-dark-800 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 text-sm md:col-span-2"
+                    onChange={url => setForm({ ...form, imageUrl: url })}
+                    accept="image"
                   />
-                  <div className="md:col-span-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs">
-                    💡 <strong>YouTube tip:</strong> Paste a YouTube URL like <code className="bg-white/10 px-1 rounded">https://www.youtube.com/watch?v=VIDEO_ID</code> — the thumbnail will be auto-generated if you leave the thumbnail field blank.
-                  </div>
-                </>
+                </div>
+              ) : (
+                <div className="md:col-span-2 space-y-3">
+                  <MediaUpload
+                    label="Video"
+                    value={form.videoUrl}
+                    onChange={url => setForm({ ...form, videoUrl: url })}
+                    accept="video"
+                  />
+                  <MediaUpload
+                    label="Thumbnail (optional)"
+                    value={form.imageUrl}
+                    onChange={url => setForm({ ...form, imageUrl: url })}
+                    accept="image"
+                    hint="Leave empty to auto-generate from video"
+                  />
+                </div>
               )}
 
               <textarea

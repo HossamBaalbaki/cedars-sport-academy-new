@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import MediaUpload from "@/components/ui/MediaUpload";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -13,6 +14,7 @@ export interface ChildFormData {
   school: string;
   medicalCardNumber: string;
   medicalNotes: string;
+  photo: string;
 }
 
 export interface Location {
@@ -34,7 +36,7 @@ export interface Program {
 export const EMPTY_FORM: ChildFormData = {
   firstName: "", lastName: "", dateOfBirth: "",
   nationality: "", bloodType: "", school: "",
-  medicalCardNumber: "", medicalNotes: "",
+  medicalCardNumber: "", medicalNotes: "", photo: "",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -117,6 +119,14 @@ export function ChildFormFields({
       <div>
           <label className="block text-white/50 text-xs mb-1">Medical Notes *</label>
         <textarea value={form.medicalNotes} onChange={set("medicalNotes")} rows={2} placeholder="Allergies, conditions..." className={`${inp} resize-none`} />
+      </div>
+      <div>
+        <label className="block text-white/50 text-xs mb-1">Photo (optional)</label>
+        <MediaUpload
+          accept="image"
+          value={form.photo}
+          onChange={(url) => onChange({ ...form, photo: url })}
+        />
       </div>
     </div>
   );

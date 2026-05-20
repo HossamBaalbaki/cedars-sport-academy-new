@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { usePageLog } from "@/hooks/useActivityLog";
 import { notificationsApi } from "@/lib/api";
+import MediaUpload from "@/components/ui/MediaUpload";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "921a4273-78be-4b91-a99b-b013e9830456";
@@ -86,8 +87,6 @@ export default function AdminNotificationsPage() {
   const [sendErr, setSendErr] = useState<string | null>(null);
 
   // Image preview debounce
-  const imgRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [imgPreview, setImgPreview] = useState("");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push("/login");
@@ -119,12 +118,6 @@ export default function AdminNotificationsPage() {
       .catch(() => {})
       .finally(() => setParentsLoading(false));
   }, [recipientMode, token, parents.length]);
-
-  function handleImageInput(val: string) {
-    setNImage(val);
-    if (imgRef.current) clearTimeout(imgRef.current);
-    imgRef.current = setTimeout(() => setImgPreview(val.trim()), 600);
-  }
 
   function toggleParent(id: string) {
     setSelectedParents((prev) => {
@@ -164,7 +157,7 @@ export default function AdminNotificationsPage() {
       });
       const count = (res.data as { created: number }).created;
       setSendResult(`Sent to ${count} parent${count !== 1 ? "s" : ""} successfully.`);
-      setNTitle(""); setNMessage(""); setNImage(""); setImgPreview("");
+      setNTitle(""); setNMessage(""); setNImage("");
       setSelectedParents(new Set()); setRecipientMode("ALL"); setNType("ANNOUNCEMENT");
       setShowCompose(false);
       fetchHistory();
@@ -271,28 +264,14 @@ export default function AdminNotificationsPage() {
                   />
                 </div>
 
-                {/* Image URL */}
-                <div>
-                  <label className="text-white/50 text-xs font-medium uppercase tracking-wider mb-2 block">Image URL <span className="normal-case text-white/30">(optional)</span></label>
-                  <input
-                    type="url"
-                    value={nImage}
-                    onChange={(e) => handleImageInput(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    className="w-full px-4 py-3 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/25 focus:outline-none focus:border-lebanon-green/50 text-sm"
-                  />
-                  {imgPreview && (
-                    <div className="mt-2 rounded-xl overflow-hidden border border-white/10 max-h-40">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imgPreview}
-                        alt="preview"
-                        className="w-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    </div>
-                  )}
-                </div>
+                {/* Image Upload */}
+                <MediaUpload
+                  label="Image (optional)"
+                  value={nImage}
+                  onChange={url => setNImage(url)}
+                  accept="image"
+                  hint="Shown in the notification sent to parents"
+                />
 
                 {/* Recipients */}
                 <div>

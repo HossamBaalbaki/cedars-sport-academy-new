@@ -21,6 +21,7 @@ export default function Hero() {
           src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1920&q=80"
           alt="Cedars Sport Academy"
           fill
+          sizes="100vw"
           className="object-cover object-center"
           priority
         />

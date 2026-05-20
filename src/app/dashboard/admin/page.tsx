@@ -118,6 +118,7 @@ export default function AdminDashboard() {
         { label: "Gallery", href: "/dashboard/admin/gallery", icon: "🖼️", desc: "Upload & manage photos" },
         { label: "News & Events", href: "/dashboard/admin/news", icon: "📰", desc: "Publish announcements" },
         { label: "Notifications", href: "/dashboard/admin/notifications", icon: "🔔", desc: "Send alerts to users" },
+        { label: "Sponsors", href: "/dashboard/admin/sponsors", icon: "🤝", desc: "Manage sponsor logos & links" },
         { label: "Messages", href: "/dashboard/admin/messages", icon: "✉️", desc: "Contact form inbox" },
       ],
     },

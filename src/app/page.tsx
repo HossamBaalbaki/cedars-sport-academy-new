@@ -11,6 +11,7 @@ import CoachesSpotlight from "@/components/home/CoachesSpotlight";
 import AchievementsStrip from "@/components/home/AchievementsStrip";
 import Testimonials from "@/components/home/Testimonials";
 import CTABanner from "@/components/home/CTABanner";
+import SponsorsStrip from "@/components/home/SponsorsStrip";
 import { getPrograms, getCoaches, getAchievements } from "@/lib/public-api";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export default async function HomePage() {
       <AchievementsStrip achievements={achievements} />
       <Testimonials />
       <CTABanner />
+      <SponsorsStrip />
     </>
   );
 }

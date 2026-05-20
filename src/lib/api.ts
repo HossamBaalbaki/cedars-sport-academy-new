@@ -605,3 +605,32 @@ export const paymentsApi = {
       body: JSON.stringify(dto),
     }),
 };
+
+// ─── Upload ───────────────────────────────────────────────────────────────────
+
+export async function uploadMedia(file: File): Promise<string> {
+  const url = `${BASE_URL}/upload`;
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "X-Tenant-ID": TENANT_ID,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: form,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message || `Upload failed: ${res.status}`);
+  }
+
+  const body = await res.json();
+  const mediaUrl = body?.data?.url ?? body?.url;
+  if (!mediaUrl) throw new Error("Upload succeeded but no URL returned");
+  return mediaUrl as string;
+}

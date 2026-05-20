@@ -105,6 +105,7 @@ export default function GalleryClient({ items }: GalleryClientProps) {
                           src={coverThumb}
                           alt={meta.label}
                           fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
@@ -154,7 +155,7 @@ export default function GalleryClient({ items }: GalleryClientProps) {
                     className="group relative rounded-xl overflow-hidden aspect-square border border-white/10 hover:border-lebanon-green/40"
                   >
                     {thumb ? (
-                      <Image src={thumb} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <Image src={thumb} alt={item.title} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-full bg-dark-800 flex items-center justify-center text-3xl">
                         🎬
@@ -179,7 +180,7 @@ export default function GalleryClient({ items }: GalleryClientProps) {
           <div className="w-full max-w-5xl">
             <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-white/10">
               {active.imageUrl ? (
-                <Image src={active.imageUrl} alt={active.title} fill className="object-contain" />
+                <Image src={active.imageUrl} alt={active.title} fill sizes="100vw" className="object-contain" />
               ) : (
                 <div className="w-full h-full bg-dark-900 flex items-center justify-center text-white/40 text-lg">
                   No preview available

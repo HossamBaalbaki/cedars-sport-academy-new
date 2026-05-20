@@ -33,6 +33,8 @@ export default function AboutPage() {
             src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1920&q=80"
             alt="About Cedars Sport Academy"
             fill
+            sizes="100vw"
+            priority
             className="object-cover opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-dark-900/80 to-dark-900" />
@@ -121,6 +123,7 @@ Champions, Inspiring Futures
                 src="https://images.unsplash.com/photo-1526676037777-05a232554f77?w=800&q=80"
                 alt="Cedars Academy Story"
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-dark-900/60 to-transparent" />

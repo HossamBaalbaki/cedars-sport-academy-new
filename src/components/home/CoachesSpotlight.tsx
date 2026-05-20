@@ -59,6 +59,7 @@ export default function CoachesSpotlight({ coaches }: Props) {
                     src={avatar}
                     alt={fullName}
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent" />

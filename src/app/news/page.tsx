@@ -48,6 +48,8 @@ export default async function NewsPage() {
                 src={featured.image || "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1200&q=80"}
                 alt={featured.title}
                 fill
+                sizes="100vw"
+                priority
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent" />
@@ -118,6 +120,7 @@ export default async function NewsPage() {
                     src={article.image || "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80"}
                     alt={article.title}
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-dark-900/60 to-transparent" />

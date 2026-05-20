@@ -59,6 +59,7 @@ export default async function ProgramsPage() {
                   src={program.image || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&q=80"}
                   alt={program.name}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-dark-900/60 to-transparent" />

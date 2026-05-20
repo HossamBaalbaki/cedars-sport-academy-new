@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useTenant } from "@/context/TenantContext";
+import MediaUpload from "@/components/ui/MediaUpload";
 
 export interface Enrollment {
   id: string;
@@ -493,25 +494,12 @@ export function EditModal({ editing, form, parents, saving, formError, onChange,
             <textarea value={form.medicalNotes} onChange={(e) => set("medicalNotes", e.target.value)} rows={3} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm resize-none" placeholder="Any medical conditions or notes..." />
           </div>
           <div>
-            <label className="block text-white/50 text-xs mb-1.5">Photo URL</label>
-            <input
-              type="url"
+            <MediaUpload
+              label="Student Photo"
               value={form.photo}
-              onChange={(e) => set("photo", e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm"
-              placeholder="https://example.com/photo.jpg"
+              onChange={url => set("photo", url)}
+              accept="image"
             />
-            {form.photo && (
-              <div className="mt-2 flex items-center gap-3">
-                <img
-                  src={form.photo}
-                  alt="Preview"
-                  className="w-12 h-12 rounded-full object-cover border-2 border-lebanon-green/40"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-                <span className="text-white/30 text-xs">Preview — will appear on ID card</span>
-              </div>
-            )}
           </div>
         </div>
         <div className="px-6 py-4 border-t border-white/5 flex gap-3">
