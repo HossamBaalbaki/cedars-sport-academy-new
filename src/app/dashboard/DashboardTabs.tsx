@@ -20,6 +20,7 @@ export interface Enrollment {
   sessionsRemaining?: number;
   sessionStartDate?: string | null;
   sessionEndDate?: string | null;
+  locationId?: string | null;
   program: {
     id: string;
     name: string;
