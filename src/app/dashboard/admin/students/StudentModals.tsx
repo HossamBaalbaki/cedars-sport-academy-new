@@ -603,7 +603,7 @@ export interface ProgramOption {
       avatar?: string | null;
     };
   } | null;
-  locations?: { location?: { name: string } }[];
+  locations?: { location?: { id: string; name: string } }[];
   schedules?: {
     dayOfWeek: number;
     startTime: string;
