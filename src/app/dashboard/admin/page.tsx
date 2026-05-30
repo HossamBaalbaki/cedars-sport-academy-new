@@ -129,6 +129,7 @@ export default function AdminDashboard() {
       links: [
         { label: "Feature Flags", href: "/dashboard/admin/features", icon: "🚩", desc: "Toggle site features" },
         { label: "Age Groups", href: "/dashboard/admin/age-groups", icon: "🎂", desc: "Manage age categories" },
+        { label: "Settings", href: "/dashboard/admin/settings", icon: "⚙️", desc: "WhatsApp & notifications" },
       ],
     },
   ];

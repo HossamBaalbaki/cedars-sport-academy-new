@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
 import type { PublicCoach } from "@/lib/public-api";
 
@@ -21,7 +22,13 @@ export default function CoachesSpotlight({ coaches }: Props) {
     <section className="section-padding bg-dark-800/30">
       <div className="container-custom">
         {/* Header */}
-        <div className="text-center mb-12">
+        <motion.div
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
           <span className="text-lebanon-green text-sm font-semibold uppercase tracking-widest">
             {t("Meet The Team", "تعرف على الفريق")}
           </span>
@@ -35,7 +42,7 @@ export default function CoachesSpotlight({ coaches }: Props) {
               "مدربون معتمدون عالمياً مكرسون لإطلاق إمكاناتك الرياضية الكاملة."
             )}
           </p>
-        </div>
+        </motion.div>
 
         {/* Coaches Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -44,14 +51,19 @@ export default function CoachesSpotlight({ coaches }: Props) {
               Coaches loading…
             </div>
           )}
-          {coaches.slice(0, 4).map((coach) => {
+          {coaches.slice(0, 4).map((coach, i) => {
             const fullName = `${coach.user?.firstName ?? ""} ${coach.user?.lastName ?? ""}`.trim() || "Coach";
             const avatar = coach.user?.avatar || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80";
 
             return (
-              <div
+              <motion.div
                 key={coach.id}
                 className="glass-card overflow-hidden group card-hover text-center"
+                initial={{ opacity: 0, y: 44 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: i * 0.1 }}
+                whileHover={{ y: -6, transition: { duration: 0.25 } }}
               >
                 {/* Coach Photo */}
                 <div className="relative h-56 overflow-hidden">
@@ -125,17 +137,23 @@ export default function CoachesSpotlight({ coaches }: Props) {
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
         {/* View All CTA */}
-        <div className="text-center mt-10">
+        <motion.div
+          className="text-center mt-10"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
           <Link href="/coaches" className="btn-outline inline-flex items-center gap-2">
             {t("Meet All Coaches", "تعرف على جميع المدربين")} →
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -26,6 +26,35 @@ export default function RegisterPage() {
   const [role, setRole] = useState<"PARENT" | "STUDENT">("PARENT");
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [firstNameError, setFirstNameError] = useState<string | null>(null);
+  const [lastNameError, setLastNameError] = useState<string | null>(null);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
+
+  async function handleResend() {
+    setResendMsg(null);
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
+      const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "";
+      const res = await fetch(`${API}/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Tenant-ID": TENANT },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      setResendMsg(data.message || "Sent!");
+    } catch {
+      setResendMsg("Failed to resend. Please try again.");
+    }
+  }
+
+  function validateName(name: string): string | null {
+    const trimmed = name.trim();
+    if (trimmed.length < 2) return "Must be at least 2 characters";
+    if (trimmed.length > 25) return "Must not exceed 25 characters";
+    if (!/^[\p{L}'\-\s]+$/u.test(trimmed)) return "Letters only — no numbers or symbols";
+    if (/[A-Z]{3,}/.test(trimmed)) return "Please enter your real name";
+    return null;
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -34,6 +63,14 @@ export default function RegisterPage() {
 
     if (!firstName || !lastName || !email || !password) {
       setFormError("Please fill in all required fields.");
+      return;
+    }
+    const fnErr = validateName(firstName);
+    const lnErr = validateName(lastName);
+    if (fnErr || lnErr) {
+      setFirstNameError(fnErr);
+      setLastNameError(lnErr);
+      setFormError("Please enter your real name.");
       return;
     }
     if (password.length < 8) {
@@ -77,16 +114,39 @@ export default function RegisterPage() {
 
         {/* Card */}
         <div className="glass-card p-8">
-          <h1 className="text-2xl font-black text-white mb-2">Start Your Journey</h1>
-          <p className="text-white/50 text-sm mb-8">
-            Register for a free trial session. No commitment required — just come and experience
-            the Cedars difference.
-          </p>
+          {!success && <h1 className="text-2xl font-black text-white mb-2">Start Your Journey</h1>}
+          {!success && (
+            <p className="text-white/50 text-sm mb-8">
+              Register for a free trial session. No commitment required — just come and experience
+              the Cedars difference.
+            </p>
+          )}
 
-          {/* Success message */}
+          {/* Success — check your email */}
           {success && (
-            <div className="mb-4 p-3 rounded-xl bg-lebanon-green/20 border border-lebanon-green/40 text-lebanon-green text-sm">
-              ✅ Registration successful! Redirecting to your dashboard…
+            <div className="text-center py-6">
+              <div className="text-6xl mb-4">📬</div>
+              <h2 className="text-xl font-black text-white mb-2">Check your inbox!</h2>
+              <p className="text-white/60 text-sm leading-relaxed mb-2">
+                We sent a verification email to
+              </p>
+              <p className="text-lebanon-green font-semibold mb-4">{email}</p>
+              <p className="text-white/50 text-xs leading-relaxed">
+                Click the link in the email to activate your account.<br />
+                The link expires in 24 hours.
+              </p>
+              <div className="mt-6 pt-5 border-t border-white/10">
+                {resendMsg ? (
+                  <p className="text-lebanon-green text-xs">{resendMsg}</p>
+                ) : (
+                  <p className="text-white/30 text-xs">
+                    Didn&apos;t receive it?{" "}
+                    <button onClick={handleResend} className="text-lebanon-green hover:underline">
+                      Resend verification email
+                    </button>
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -104,25 +164,33 @@ export default function RegisterPage() {
                 <label className="block text-white/60 text-sm mb-1.5">First Name *</label>
                 <input
                   type="text"
-                  placeholder="name"
+                  placeholder="e.g. John"
                   value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    setFirstNameError(e.target.value ? validateName(e.target.value) : null);
+                  }}
                   required
                   disabled={isLoading}
-                  className="w-full bg-dark-800 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 transition-colors disabled:opacity-50"
+                  className={`w-full bg-dark-800 border rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none transition-colors disabled:opacity-50 ${firstNameError ? "border-red-500/60 focus:border-red-500/80" : "border-white/10 focus:border-lebanon-green/50"}`}
                 />
+                {firstNameError && <p className="text-red-400 text-xs mt-1.5">⚠ {firstNameError}</p>}
               </div>
               <div>
                 <label className="block text-white/60 text-sm mb-1.5">Last Name *</label>
                 <input
                   type="text"
-                  placeholder="Surname"
+                  placeholder="e.g. Smith"
                   value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    setLastNameError(e.target.value ? validateName(e.target.value) : null);
+                  }}
                   required
                   disabled={isLoading}
-                  className="w-full bg-dark-800 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 transition-colors disabled:opacity-50"
+                  className={`w-full bg-dark-800 border rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none transition-colors disabled:opacity-50 ${lastNameError ? "border-red-500/60 focus:border-red-500/80" : "border-white/10 focus:border-lebanon-green/50"}`}
                 />
+                {lastNameError && <p className="text-red-400 text-xs mt-1.5">⚠ {lastNameError}</p>}
               </div>
             </div>
 

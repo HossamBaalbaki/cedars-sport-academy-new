@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import NewsTicker from "@/components/layout/NewsTicker";
+import RollingBall from "@/components/ui/RollingBall";
 
 export const metadata: Metadata = {
   title: {
@@ -82,6 +83,8 @@ export default function RootLayout({
               <main>{children}</main>
               {/* Footer */}
               <Footer />
+              {/* Rolling football — follows scroll on all public pages */}
+              <RollingBall />
             </LanguageProvider>
           </AuthProvider>
         </TenantProvider>

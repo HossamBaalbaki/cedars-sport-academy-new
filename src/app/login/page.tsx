@@ -18,6 +18,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [unverified, setUnverified] = useState(false);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -33,9 +35,30 @@ export default function LoginPage() {
       await login(email, password);
       setSuccess(true);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Login failed. Please try again.";
-      setFormError(msg);
+      const msg = err instanceof Error ? err.message : "Login failed. Please try again.";
+      if (msg.includes("EMAIL_NOT_VERIFIED")) {
+        setUnverified(true);
+        setFormError(null);
+      } else {
+        setFormError(msg.replace("EMAIL_NOT_VERIFIED: ", ""));
+      }
+    }
+  }
+
+  async function handleResend() {
+    setResendMsg(null);
+    try {
+      const API    = process.env.NEXT_PUBLIC_API_URL   || "http://localhost:3001/v1";
+      const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "";
+      const res = await fetch(`${API}/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Tenant-ID": TENANT },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      setResendMsg(data.message || "Sent!");
+    } catch {
+      setResendMsg("Failed to resend. Please try again.");
     }
   }
 
@@ -70,6 +93,26 @@ export default function LoginPage() {
           {success && (
             <div className="mb-4 p-3 rounded-xl bg-lebanon-green/20 border border-lebanon-green/40 text-lebanon-green text-sm">
               ✅ Login successful! Redirecting…
+            </div>
+          )}
+
+          {/* Email not verified banner */}
+          {unverified && !success && (
+            <div className="mb-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-sm">
+              <p className="text-yellow-400 font-semibold mb-1">📧 Please verify your email</p>
+              <p className="text-white/60 text-xs mb-3">
+                Check your inbox for the verification link we sent when you registered.
+              </p>
+              {resendMsg ? (
+                <p className="text-lebanon-green text-xs">{resendMsg}</p>
+              ) : (
+                <button
+                  onClick={handleResend}
+                  className="text-lebanon-green text-xs hover:underline"
+                >
+                  Resend verification email →
+                </button>
+              )}
             </div>
           )}
 
