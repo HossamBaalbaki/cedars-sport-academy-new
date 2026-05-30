@@ -609,6 +609,7 @@ export interface ProgramOption {
     startTime: string;
     endTime: string;
     isActive?: boolean;
+    locationId?: string | null;
     location?: { id: string; name: string } | null;
   }[];
 }
@@ -616,13 +617,14 @@ export interface ProgramOption {
 interface EnrollModalProps {
   student: Student;
   programs: ProgramOption[];
+  enrolledProgramIds?: string[];
   saving: boolean;
   error: string | null;
   onSave: (data: { programId: string; locationId?: string; sessionsCount: number; isPaid: boolean; paymentMethod: string; amount: number }) => void;
   onClose: () => void;
 }
 
-export function EnrollModal({ student, programs, saving, error, onSave, onClose }: EnrollModalProps) {
+export function EnrollModal({ student, programs, enrolledProgramIds = [], saving, error, onSave, onClose }: EnrollModalProps) {
   const [programId, setProgramId] = useState("");
   const [locationId, setLocationId] = useState("");
   const [search, setSearch] = useState("");
@@ -641,11 +643,16 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
   const selectedProgram = programs.find((p) => p.id === programId);
   const availableLocations = (() => {
     const map = new Map<string, { id: string; name: string }>();
+    // From program_locations join table
     for (const pl of selectedProgram?.locations ?? []) {
       if (pl.location?.id) map.set(pl.location.id, pl.location);
     }
-    for (const s of selectedProgram?.schedules ?? []) {
-      if (s.location?.id && !map.has(s.location.id)) map.set(s.location.id, s.location as { id: string; name: string });
+    // From schedules — use locationId directly as it's always a scalar field
+    for (const s of (selectedProgram?.schedules ?? []).filter(s => s.isActive !== false)) {
+      if (s.locationId && !map.has(s.locationId)) {
+        const name = s.location?.name ?? map.get(s.locationId)?.name ?? "Location";
+        map.set(s.locationId, { id: s.locationId, name });
+      }
     }
     return Array.from(map.values());
   })();
@@ -700,6 +707,7 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
               ) : (
                 filtered.map((p) => {
                   const isSelected = programId === p.id;
+                  const isEnrolled = enrolledProgramIds.includes(p.id);
                   const activeSchedules = (p.schedules ?? []).filter((s) => s.isActive !== false);
                   const locationNames = [
                     ...(p.locations ?? []).map((l) => l.location?.name).filter(Boolean),
@@ -710,13 +718,20 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
                   return (
                     <div
                       key={p.id}
-                      onClick={() => selectProgram(p)}
-                      className={`relative cursor-pointer rounded-xl border p-4 transition-all ${
-                        isSelected
-                          ? "border-lebanon-green bg-lebanon-green/8 ring-1 ring-lebanon-green/20"
-                          : "border-white/8 bg-white/3 hover:border-white/20 hover:bg-white/5"
+                      onClick={() => !isEnrolled && selectProgram(p)}
+                      className={`relative rounded-xl border p-4 transition-all ${
+                        isEnrolled
+                          ? "border-white/5 bg-white/2 opacity-50 cursor-not-allowed"
+                          : isSelected
+                          ? "cursor-pointer border-lebanon-green bg-lebanon-green/8 ring-1 ring-lebanon-green/20"
+                          : "cursor-pointer border-white/8 bg-white/3 hover:border-white/20 hover:bg-white/5"
                       }`}
                     >
+                      {isEnrolled && (
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">
+                          ✓ Enrolled
+                        </span>
+                      )}
                       <div className="flex items-start justify-between gap-3">
                         {/* Left: name + details */}
                         <div className="flex items-start gap-3 flex-1 min-w-0">

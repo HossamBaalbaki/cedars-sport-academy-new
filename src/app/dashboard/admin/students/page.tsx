@@ -610,6 +610,7 @@ export default function AdminStudentsPage() {
         <EnrollModal
           student={enrollTarget}
           programs={programs}
+          enrolledProgramIds={enrollTarget.enrollments?.filter(e => e.isActive !== false).map(e => e.programId).filter(Boolean) as string[]}
           saving={enrollSaving}
           error={enrollError}
           onSave={handleAdminEnroll}
