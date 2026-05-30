@@ -10,7 +10,7 @@ export interface Schedule {
   dayOfWeek: number; // 0=Sun … 6=Sat
   startTime: string;
   endTime: string;
-  location?: { name: string };
+  location?: { id?: string; name: string };
   programName?: string;
 }
 
@@ -18,6 +18,8 @@ export interface Enrollment {
   id: string;
   isActive: boolean;
   sessionsRemaining?: number;
+  sessionStartDate?: string | null;
+  sessionEndDate?: string | null;
   program: {
     id: string;
     name: string;
@@ -176,6 +178,14 @@ export function OverviewTab({
                           )}
                         </div>
                       )}
+                      {(enr.sessionStartDate || enr.sessionEndDate) && (
+                        <div className="mt-1 flex items-center gap-1 text-[11px] text-white/35">
+                          <span>📅</span>
+                          <span>{enr.sessionStartDate ? new Date(enr.sessionStartDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</span>
+                          <span>→</span>
+                          <span>{enr.sessionEndDate ? new Date(enr.sessionEndDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <button
@@ -223,10 +233,9 @@ export function ScheduleTab({ enrollments }: { enrollments: Enrollment[] }) {
   const schedules = enrollments
     .filter((e) => e.isActive)
     .flatMap((e) =>
-      (e.program.schedules ?? []).map((s) => ({
-        ...s,
-        programName: e.program.name,
-      }))
+      (e.program.schedules ?? [])
+        .filter((s) => !e.locationId || !s.location?.id || s.location.id === e.locationId)
+        .map((s) => ({ ...s, programName: e.program.name }))
     )
     .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
 

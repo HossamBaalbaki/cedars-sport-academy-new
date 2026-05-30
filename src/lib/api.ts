@@ -293,10 +293,10 @@ export const studentsApi = {
     }),
 
   /** Parent: enroll their child in a program */
-  enrollMyChild: (childId: string, programId: string) =>
+  enrollMyChild: (childId: string, programId: string, locationId?: string) =>
     apiClient<unknown>(`/students/my-children/${childId}/enroll`, {
       method: "POST",
-      body: JSON.stringify({ programId }),
+      body: JSON.stringify({ programId, ...(locationId ? { locationId } : {}) }),
     }),
 
   /** Parent: unenroll their child from a program */

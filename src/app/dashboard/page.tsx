@@ -310,7 +310,7 @@ export default function ParentDashboard() {
   async function doAddStep2() {
     if (addEnrollId && newChildId) {
       setAddLoading(true); setAddError(null);
-      try { await studentsApi.enrollMyChild(newChildId, addEnrollId); await fetchData(); }
+      try { await studentsApi.enrollMyChild(newChildId, addEnrollId, addEnrollLocationId); await fetchData(); }
       catch (e) { setAddError(e instanceof Error ? e.message : "Failed to enroll"); setAddLoading(false); return; }
       setAddLoading(false);
     }
@@ -372,7 +372,7 @@ export default function ParentDashboard() {
   async function doEnroll() {
     if (!enrollChildId || !enrollProgramId) { setEnrollError("Please select a program."); return; }
     setEnrollLoading(true); setEnrollError(null);
-    try { await studentsApi.enrollMyChild(enrollChildId, enrollProgramId); await fetchData(); setShowEnroll(false); }
+    try { await studentsApi.enrollMyChild(enrollChildId, enrollProgramId, enrollLocationId); await fetchData(); setShowEnroll(false); }
     catch (e) { setEnrollError(e instanceof Error ? e.message : "Failed to enroll"); }
     finally { setEnrollLoading(false); }
   }

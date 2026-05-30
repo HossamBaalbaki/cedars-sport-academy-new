@@ -9,6 +9,8 @@ export interface Enrollment {
   sessionsRemaining?: number;
   isActive?: boolean;
   enrolledAt?: string;
+  sessionStartDate?: string | null;
+  sessionEndDate?: string | null;
   program?: { name: string; locations?: { location?: { name: string } }[] };
 }
 
@@ -358,12 +360,24 @@ export function ViewModal({
                   const enrolled = e.isActive !== false;
                   return (
                     <div key={e.id} className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${enrolled ? "bg-emerald-400" : "bg-white/20"}`} />
-                        <span className="text-white/70 text-sm truncate">
-                          {e.program?.name || "Program"}
-                          {(() => { const loc = e.program?.locations?.[0]?.location?.name; return loc ? <span className="text-white/35 text-xs"> · {loc}</span> : null; })()}
-                        </span>
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${enrolled ? "bg-emerald-400" : "bg-white/20"}`} />
+                          <span className="text-white/70 text-sm truncate">
+                            {e.program?.name || "Program"}
+                            {(() => { const loc = e.program?.locations?.[0]?.location?.name; return loc ? <span className="text-white/35 text-xs"> · {loc}</span> : null; })()}
+                          </span>
+                        </div>
+                        {(e.sessionStartDate || e.sessionEndDate) && (
+                          <div className="flex items-center gap-1.5 ml-3.5 text-[11px] text-white/35">
+                            <span>📅</span>
+                            <span>{e.sessionStartDate ? new Date(e.sessionStartDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</span>
+                            <span>→</span>
+                            <span className={e.sessionEndDate && new Date(e.sessionEndDate) < new Date() ? "text-red-400/60" : "text-white/35"}>
+                              {e.sessionEndDate ? new Date(e.sessionEndDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className={`text-sm font-bold ${sessColor}`}>
@@ -604,12 +618,13 @@ interface EnrollModalProps {
   programs: ProgramOption[];
   saving: boolean;
   error: string | null;
-  onSave: (data: { programId: string; sessionsCount: number; isPaid: boolean; paymentMethod: string; amount: number }) => void;
+  onSave: (data: { programId: string; locationId?: string; sessionsCount: number; isPaid: boolean; paymentMethod: string; amount: number }) => void;
   onClose: () => void;
 }
 
 export function EnrollModal({ student, programs, saving, error, onSave, onClose }: EnrollModalProps) {
   const [programId, setProgramId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [search, setSearch] = useState("");
   const [sessionsCount, setSessionsCount] = useState(8);
   const [isPaid, setIsPaid] = useState(false);
@@ -623,14 +638,18 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
     p.locations?.some((l) => l.location?.name.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const selectedProgram = programs.find((p) => p.id === programId);
+  const availableLocations = selectedProgram?.locations?.map((l) => l.location).filter(Boolean) ?? [];
+
   function selectProgram(p: ProgramOption) {
     setProgramId(p.id);
+    setLocationId("");
     setAmount(String(p.price));
   }
 
   function handleSave() {
     if (!programId) return;
-    onSave({ programId, sessionsCount, isPaid, paymentMethod, amount: isPaid ? Number(amount) : 0 });
+    onSave({ programId, locationId: locationId || undefined, sessionsCount, isPaid, paymentMethod, amount: isPaid ? Number(amount) : 0 });
   }
 
   return (
@@ -763,6 +782,28 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
               )}
             </div>
           </div>
+
+          {/* Location selector — shown only when program has multiple locations */}
+          {programId && availableLocations.length > 1 && (
+            <div>
+              <label className="block text-white/50 text-xs mb-1.5 uppercase tracking-wider">Select Location *</label>
+              <div className="space-y-1.5">
+                {availableLocations.map((loc) => loc && (
+                  <div
+                    key={loc.id}
+                    onClick={() => setLocationId(loc.id)}
+                    className={`cursor-pointer px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                      locationId === loc.id
+                        ? "border-lebanon-green bg-lebanon-green/10 text-white"
+                        : "border-white/10 bg-white/3 text-white/60 hover:border-white/20"
+                    }`}
+                  >
+                    📍 {loc.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Sessions */}
           <div>

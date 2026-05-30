@@ -31,12 +31,14 @@ interface PaymentRow {
   coachName?: string | null;
   parentFirstName?: string | null;
   parentLastName?: string | null;
+  parentPhone?: string | null;
   sessionsTotal?: number | null;
 }
 
 interface ParentGroup {
   key: string;
   parentName: string;
+  parentPhone?: string | null;
   isUnlinked?: boolean;
   payments: PaymentRow[];
   students: { name: string; program: string }[];
@@ -830,6 +832,7 @@ export default function AdminPaymentsPage() {
       result.push({
         key,
         parentName: displayName,
+        parentPhone: rows.find(p => p.parentPhone)?.parentPhone ?? null,
         isUnlinked,
         payments: sorted,
         students: Array.from(studentMap.entries()).map(([name, program]) => ({ name, program })),
@@ -853,6 +856,7 @@ export default function AdminPaymentsPage() {
     if (!q) return groups;
     return groups.filter(g =>
       g.parentName.toLowerCase().includes(q) ||
+      (g.parentPhone ?? "").toLowerCase().includes(q) ||
       g.students.some(s => s.name.toLowerCase().includes(q) || s.program.toLowerCase().includes(q))
     );
   }, [groups, search]);

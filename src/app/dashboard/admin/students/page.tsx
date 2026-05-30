@@ -143,7 +143,7 @@ export default function AdminStudentsPage() {
     finally { setTogglingStudent(null); }
   };
 
-  const handleAdminEnroll = async (data: { programId: string; sessionsCount: number; isPaid: boolean; paymentMethod: string; amount: number }) => {
+  const handleAdminEnroll = async (data: { programId: string; locationId?: string; sessionsCount: number; isPaid: boolean; paymentMethod: string; amount: number }) => {
     if (!enrollTarget) return;
     setEnrollSaving(true); setEnrollError(null);
     try {
@@ -291,7 +291,9 @@ export default function AdminStudentsPage() {
     const matchesSearch =
       `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
       s.parent?.email?.toLowerCase().includes(search.toLowerCase()) ||
-      s.parent?.firstName?.toLowerCase().includes(search.toLowerCase());
+      s.parent?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+      s.parent?.phone?.toLowerCase().includes(search.toLowerCase()) ||
+      s.parentPhone?.toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
     const isActive = s.isActive !== false;
     const hasEnrollment = (s.enrollments?.length ?? 0) > 0;
