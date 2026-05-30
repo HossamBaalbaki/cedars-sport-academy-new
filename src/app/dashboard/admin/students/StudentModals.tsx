@@ -609,7 +609,7 @@ export interface ProgramOption {
     startTime: string;
     endTime: string;
     isActive?: boolean;
-    location?: { name: string } | null;
+    location?: { id: string; name: string } | null;
   }[];
 }
 
@@ -639,7 +639,16 @@ export function EnrollModal({ student, programs, saving, error, onSave, onClose 
   );
 
   const selectedProgram = programs.find((p) => p.id === programId);
-  const availableLocations = selectedProgram?.locations?.map((l) => l.location).filter(Boolean) ?? [];
+  const availableLocations = (() => {
+    const map = new Map<string, { id: string; name: string }>();
+    for (const pl of selectedProgram?.locations ?? []) {
+      if (pl.location?.id) map.set(pl.location.id, pl.location);
+    }
+    for (const s of selectedProgram?.schedules ?? []) {
+      if (s.location?.id && !map.has(s.location.id)) map.set(s.location.id, s.location as { id: string; name: string });
+    }
+    return Array.from(map.values());
+  })();
 
   function selectProgram(p: ProgramOption) {
     setProgramId(p.id);
