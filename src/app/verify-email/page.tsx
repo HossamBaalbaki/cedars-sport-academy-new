@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 const API    = process.env.NEXT_PUBLIC_API_URL   || "http://localhost:3001/v1";
@@ -11,10 +11,20 @@ const TENANT = process.env.NEXT_PUBLIC_TENANT_ID || "";
 
 type Status = "loading" | "success" | "error";
 
-// ── Inner component that uses useSearchParams ──────────────────────────────
+function getDashboardRoute(role: string) {
+  switch (role) {
+    case "ADMIN":
+    case "SUPER_ADMIN": return "/dashboard/admin";
+    case "COACH":       return "/dashboard/coach";
+    default:            return "/dashboard";
+  }
+}
+
+// ── Inner component — uses useSearchParams ─────────────────────────────────
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const router       = useRouter();
+  const token        = searchParams.get("token");
 
   const [status,  setStatus]  = useState<Status>("loading");
   const [message, setMessage] = useState("");
@@ -30,20 +40,33 @@ function VerifyEmailContent() {
       headers: { "X-Tenant-ID": TENANT },
     })
       .then(async (res) => {
-        const data = await res.json();
-        if (res.ok) {
+        const body = await res.json();
+        if (res.ok && body.data?.token) {
+          // Auto-login: store session exactly as the login flow does
+          const jwt  = body.data.token;
+          const user = body.data.user;
+
+          localStorage.setItem("auth_token", jwt);
+          localStorage.setItem("auth_user",  JSON.stringify(user));
+          document.cookie = `auth_token=${jwt}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+
           setStatus("success");
-          setMessage(data.message || "Email verified successfully!");
+          setMessage(`Welcome, ${user.firstName}! Your email is verified.`);
+
+          // Redirect to dashboard after a brief moment
+          setTimeout(() => {
+            router.push(getDashboardRoute(user.role));
+          }, 1800);
         } else {
           setStatus("error");
-          setMessage(data.message || "Invalid or expired verification link.");
+          setMessage(body.message || "Invalid or expired verification link.");
         }
       })
       .catch(() => {
         setStatus("error");
         setMessage("Network error. Please try again.");
       });
-  }, [token]);
+  }, [token, router]);
 
   return (
     <div className="glass-card p-8 text-center">
@@ -58,13 +81,9 @@ function VerifyEmailContent() {
         <>
           <div className="text-5xl mb-4">✅</div>
           <h1 className="text-2xl font-black text-white mb-3">Email Verified!</h1>
-          <p className="text-white/60 text-sm mb-6 leading-relaxed">{message}</p>
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center gap-2 bg-lebanon-green hover:bg-cedar-600 text-white font-bold px-8 py-3 rounded-xl transition-colors"
-          >
-            Log In Now →
-          </Link>
+          <p className="text-white/60 text-sm mb-2 leading-relaxed">{message}</p>
+          <p className="text-lebanon-green text-xs">Taking you to your dashboard…</p>
+          <div className="mt-4 w-8 h-8 border-2 border-lebanon-green/30 border-t-lebanon-green rounded-full animate-spin mx-auto" />
         </>
       )}
 
@@ -90,7 +109,7 @@ function VerifyEmailContent() {
   );
 }
 
-// ── Page: wraps content in Suspense (required for useSearchParams) ─────────
+// ── Page: Suspense wrapper required for useSearchParams ────────────────────
 export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen bg-dark-900 flex items-center justify-center px-4">
