@@ -231,7 +231,7 @@ export default function Footer() {
               {t("Terms of Use", "شروط الاستخدام")}
             </Link>
             <span className="text-white/20 text-xs">
-              {t("Powered by LebConnect +974 66 36 57 95", "مدعوم من LebConnect SaaS")}
+              {t("Powered by Vrentax", "مدعوم من Vrentax")}
             </span>
           </div>
         </div>
