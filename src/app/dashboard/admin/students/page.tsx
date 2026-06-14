@@ -288,12 +288,16 @@ export default function AdminStudentsPage() {
   const hasExpiring = (s: Student) => (s.enrollments ?? []).some(e => { const r = e.sessionsRemaining ?? 0; return r > 0 && r <= 3; });
 
   const filtered = students.filter((s) => {
+    const q = search.toLowerCase();
     const matchesSearch =
-      `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
-      s.parent?.email?.toLowerCase().includes(search.toLowerCase()) ||
-      s.parent?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-      s.parent?.phone?.toLowerCase().includes(search.toLowerCase()) ||
-      s.parentPhone?.toLowerCase().includes(search.toLowerCase());
+      `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
+      s.parent?.email?.toLowerCase().includes(q) ||
+      s.parentEmail?.toLowerCase().includes(q) ||
+      s.parent?.firstName?.toLowerCase().includes(q) ||
+      s.parent?.lastName?.toLowerCase().includes(q) ||
+      s.parent?.phone?.toLowerCase().includes(q) ||
+      s.parentPhone?.toLowerCase().includes(q) ||
+      s.studentCode?.toLowerCase().includes(q);
     if (!matchesSearch) return false;
     const isActive = s.isActive !== false;
     const hasEnrollment = (s.enrollments?.length ?? 0) > 0;
@@ -349,7 +353,7 @@ export default function AdminStudentsPage() {
         <div className="mb-6 space-y-3">
           <input
             type="text"
-            placeholder="Search by name or parent email..."
+            placeholder="Search by name, phone, student code or parent email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full px-4 py-3 rounded-xl bg-dark-800 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 text-sm"
