@@ -500,7 +500,16 @@ export function EditModal({ editing, form, parents, saving, formError, onChange,
             </div>
             <div>
               <label className="block text-white/50 text-xs mb-1.5">Parent Phone <span className="text-white/25">(optional)</span></label>
-              <input type="tel" value={form.newParentPhone} onChange={(e) => set("newParentPhone", e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm" placeholder="+974 ..." />
+              <div className="flex">
+                <span className="inline-flex items-center px-3 py-2.5 bg-dark-800/80 border border-r-0 border-white/10 rounded-l-xl text-white/40 text-xs select-none font-mono">+974</span>
+                <input
+                  type="tel"
+                  value={form.newParentPhone.replace(/^\+?974/, '')}
+                  onChange={(e) => set("newParentPhone", '+974' + e.target.value.replace(/\D/g, ''))}
+                  className="flex-1 px-3 py-2.5 rounded-r-xl bg-dark-900 border border-white/10 text-white placeholder-white/20 focus:outline-none focus:border-lebanon-green/50 text-sm"
+                  placeholder="50 000 000"
+                />
+              </div>
             </div>
           </div>
           <div>

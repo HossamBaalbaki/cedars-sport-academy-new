@@ -83,7 +83,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(firstName, lastName, email, password, phone || undefined, role);
+      await register(firstName, lastName, email, password, phone ? `+974${phone}` : undefined, role);
       setSuccess(true);
     } catch (err: unknown) {
       const msg =
@@ -211,14 +211,17 @@ export default function RegisterPage() {
             {/* Phone */}
             <div>
               <label className="block text-white/60 text-sm mb-1.5">Phone Number</label>
-              <input
-                type="tel"
-                placeholder="+974 00 00 00 00"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                disabled={isLoading}
-                className="w-full bg-dark-800 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 transition-colors disabled:opacity-50"
-              />
+              <div className="flex">
+                <span className="inline-flex items-center px-3 bg-dark-700 border border-r-0 border-white/10 rounded-l-xl text-white/50 text-sm select-none font-mono">+974</span>
+                <input
+                  type="tel"
+                  placeholder="50 000 000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                  disabled={isLoading}
+                  className="flex-1 bg-dark-800 border border-white/10 rounded-r-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-lebanon-green/50 transition-colors disabled:opacity-50"
+                />
+              </div>
             </div>
 
             {/* Sport & Location */}
