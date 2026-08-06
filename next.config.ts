@@ -2,10 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // All images are served from Cloudinary which handles its own optimization
-    // (q_auto/f_auto). Disabling Next.js image processing avoids 400/500 errors
-    // caused by double-processing pre-transformed Cloudinary URLs.
-    unoptimized: true,
+    loader: "custom",
+    loaderFile: "./src/lib/imageLoader.ts",
+    remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "pub-e724e05026e748809f2129be65a6df69.r2.dev" },
+    ],
   },
 };
 

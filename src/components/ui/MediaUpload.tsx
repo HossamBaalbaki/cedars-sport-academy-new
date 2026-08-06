@@ -104,7 +104,6 @@ export default function MediaUpload({
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-contain rounded-lg"
-                  unoptimized
                 />
               </div>
             )}
