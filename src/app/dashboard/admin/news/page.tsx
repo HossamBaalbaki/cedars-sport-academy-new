@@ -90,7 +90,7 @@ export default function AdminNewsPage() {
         title: form.title,
         content: form.content,
         category: form.category || undefined,
-        image: form.image || undefined,
+        image: form.image || null,
         publishedAt: form.publishedAt ? new Date(form.publishedAt).toISOString() : undefined,
       };
       const res = await fetch(url, {
